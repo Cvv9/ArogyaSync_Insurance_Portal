@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldCheck, CalendarDays, IdCard } from 'lucide-react';
+import '../App.css'; // Ensure global styles are available
 
 const InsurancePage = () => {
   const navigate = useNavigate();
@@ -59,91 +60,112 @@ const InsurancePage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 p-6">
-      <div className="max-w-5xl w-full bg-white rounded-xl shadow-xl grid grid-cols-1 md:grid-cols-2 overflow-hidden">
-        {/* Left Panel */}
-        <div className="bg-blue-900 text-white p-8 flex flex-col justify-between">
+    <div className="app-container flex-center">
+      <div className="glass-panel" style={{ display: 'flex', width: '900px', maxWidth: '95%', minHeight: '550px', overflow: 'hidden' }}>
+        
+        {/* Left Panel - Information */}
+        <div style={{ flex: 1, padding: '40px', background: 'rgba(0, 240, 255, 0.03)', borderRight: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <div>
-            <h2 className="text-3xl font-bold mb-2">Patient Insurance Portal</h2>
-            <p className="text-blue-100 text-sm mb-6">
-              Verify a patient's insurance by submitting the required details.
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+              <div style={{ background: 'var(--color-primary-glow)', padding: '12px', borderRadius: '12px', color: 'var(--color-primary)' }}>
+                <ShieldCheck size={32} />
+              </div>
+              <h1 style={{ fontSize: '1.75rem', fontWeight: 700, margin: 0 }} className="text-gradient">ArogyaSync</h1>
+            </div>
+            
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '16px', color: '#fff' }}>Patient Portal</h2>
+            <p className="text-muted" style={{ lineHeight: 1.6, marginBottom: '40px' }}>
+              Securely verify patient insurance coverage and access their connected device data and vital records.
             </p>
 
-            <div className="space-y-4 text-sm">
-              <div className="flex items-center gap-3">
-                <ShieldCheck className="w-5 h-5" />
-                <span>Secure & Encrypted Submission</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ color: 'var(--color-primary)' }}><ShieldCheck size={20} /></div>
+                <span style={{ fontSize: '0.9rem', color: '#e2e8f0' }}>AES-256 Encrypted verification</span>
               </div>
-              <div className="flex items-center gap-3">
-                <IdCard className="w-5 h-5" />
-                <span>Verify via Insurance ID</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ color: 'var(--color-primary)' }}><IdCard size={20} /></div>
+                <span style={{ fontSize: '0.9rem', color: '#e2e8f0' }}>Instant ID authorization</span>
               </div>
-              <div className="flex items-center gap-3">
-                <CalendarDays className="w-5 h-5" />
-                <span>Check coverage date records</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ color: 'var(--color-primary)' }}><CalendarDays size={20} /></div>
+                <span style={{ fontSize: '0.9rem', color: '#e2e8f0' }}>Historical vital correlation</span>
               </div>
             </div>
           </div>
 
-          <p className="text-xs mt-8 text-blue-200">© 2025 Insurance Portal • All Rights Reserved</p>
+          <div className="text-muted" style={{ fontSize: '0.8rem', marginTop: '40px' }}>
+            © {new Date().getFullYear()} ArogyaSync Health Systems
+          </div>
         </div>
 
-        {/* Right Panel */}
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
-          <h3 className="text-xl font-semibold text-gray-800 text-center">Enter Patient Details</h3>
+        {/* Right Panel - Form */}
+        <div style={{ flex: 1, padding: '40px 48px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <h3 style={{ fontSize: '1.25rem', marginBottom: '32px', textAlign: 'center', fontWeight: 600 }}>Verify Patient Coverage</h3>
+          
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            
+            <div>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>Full Name</label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+                placeholder="e.g., Jane Doe"
+                className="input-glass"
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-              placeholder="John Doe"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+            <div>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>Date of Birth</label>
+              <input
+                type="date"
+                name="dob"
+                value={formData.dob}
+                onChange={handleChange}
+                required
+                className="input-glass"
+                style={{ colorScheme: 'dark' }} // helpful for date picker icon on some browsers
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
-            <input
-              type="date"
-              name="dob"
-              value={formData.dob}
-              onChange={handleChange}
-              required
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+            <div>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>Insurance ID</label>
+              <input
+                type="text"
+                name="insuranceId"
+                value={formData.insuranceId}
+                onChange={handleChange}
+                required
+                placeholder="e.g., INS-123456"
+                className="input-glass"
+                style={{ textTransform: 'uppercase' }}
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Insurance ID</label>
-            <input
-              type="text"
-              name="insuranceId"
-              value={formData.insuranceId}
-              onChange={handleChange}
-              required
-              placeholder="INS123456"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-primary"
+              style={{ padding: '14px', marginTop: '16px', fontSize: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}
+            >
+              {loading ? (
+                <>
+                  <div style={{ width: '18px', height: '18px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+                  <span>Verifying...</span>
+                  <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                </>
+              ) : 'Verify & Access Records'}
+            </button>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className={`w-full py-3 text-white rounded-lg font-medium transition ${
-              loading ? 'bg-blue-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
-            }`}
-          >
-            {loading ? 'Submitting...' : 'Submit & View Records'}
-          </button>
+            {/* Error/Message feedback */}
+            {error && <div style={{ color: 'var(--color-danger)', fontSize: '0.875rem', textAlign: 'center', background: 'var(--color-danger-bg)', padding: '10px', borderRadius: 'var(--border-radius-sm)', border: '1px solid rgba(239,68,68,0.3)' }}>{error}</div>}
+            {message && <div style={{ color: 'var(--color-success)', fontSize: '0.875rem', textAlign: 'center', background: 'var(--color-success-bg)', padding: '10px', borderRadius: 'var(--border-radius-sm)', border: '1px solid rgba(16,185,129,0.3)' }}>{message}</div>}
 
-          {/* Feedback */}
-          {error && <p className="text-red-600 text-sm text-center">{error}</p>}
-          {message && <p className="text-green-600 text-sm text-center">{message}</p>}
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   );

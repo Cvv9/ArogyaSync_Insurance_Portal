@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Hospital, MapPin, Hash, Bell, User, Calendar, Wallet
-} from 'lucide-react'; // ✅ added icons
+  Hospital, MapPin, Hash, Bell, User, Calendar, Wallet, HeartPulse, Activity
+} from 'lucide-react';
+import '../App.css';
 
 const Dashboard = () => {
   const [patients, setPatients] = useState([]);
@@ -38,95 +39,168 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50 text-gray-800">
+    <div className="app-container">
       {/* Sidebar */}
-      <aside className="w-64 bg-blue-900 text-white p-6 hidden md:flex flex-col space-y-8">
-        <div className="text-2xl font-bold flex items-center gap-2">
-          <span>📡</span>
-          <span>INSURANCE</span>
+      <aside style={{ width: '260px', background: 'rgba(10, 15, 28, 0.95)', borderRight: '1px solid var(--color-border)', padding: '32px 24px', display: 'flex', flexDirection: 'column', gap: '40px', zIndex: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ background: 'var(--color-primary-glow)', padding: '10px', borderRadius: '10px', color: 'var(--color-primary)' }}>
+            <Activity size={24} />
+          </div>
+          <span className="text-gradient" style={{ fontSize: '1.25rem', fontWeight: 700 }}>ArogyaSync</span>
         </div>
-        <nav className="flex flex-col gap-4 text-base font-medium">
-          <button className="text-left hover:text-blue-200">📊 Dashboard</button>
-          <button className="text-left hover:text-blue-200">💻 Patients</button>
+        
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--color-text-muted)', letterSpacing: '0.05em', marginBottom: '8px', fontWeight: 600 }}>Menu</div>
+          
+          <button style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'var(--color-primary-glow)', color: 'var(--color-primary)', border: '1px solid rgba(0,240,255,0.2)', borderRadius: 'var(--border-radius-sm)', cursor: 'pointer', textAlign: 'left', fontWeight: 500, transition: 'all 0.2s' }}>
+            <User size={18} /> Patients
+          </button>
+          
+          <button style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'transparent', color: 'var(--color-text-muted)', border: '1px solid transparent', borderRadius: 'var(--border-radius-sm)', cursor: 'pointer', textAlign: 'left', fontWeight: 500, transition: 'all 0.2s' }} onMouseOver={e => e.currentTarget.style.color = '#fff'} onMouseOut={e => e.currentTarget.style.color = 'var(--color-text-muted)'}>
+            <HeartPulse size={18} /> Analytics
+          </button>
         </nav>
       </aside>
 
-      {/* Main */}
-      <main className="flex-1 overflow-auto">
-        <header className="flex justify-between items-center p-6 bg-white border-b">
-          <h2 className="text-xl font-semibold text-blue-800">Registered Patients</h2>
-          <div className="flex items-center gap-4 text-blue-700">
-            <Bell className="w-5 h-5 cursor-pointer hover:text-blue-900" />
-            <User className="w-5 h-5 cursor-pointer hover:text-blue-900" />
+      {/* Main Content */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+        
+        <header className="page-header">
+          <div>
+            <h2 className="text-gradient" style={{ fontSize: '1.5rem', margin: 0 }}>Patient Directory</h2>
+            <p className="text-muted" style={{ fontSize: '0.875rem', marginTop: '4px' }}>Manage and monitor patient health records</p>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <button style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--color-border)', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--color-text-main)', cursor: 'pointer', transition: 'all 0.2s' }} onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'} onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}>
+              <Bell size={18} />
+            </button>
+            <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--color-primary-glow)', border: '1px solid var(--color-primary)', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold', color: 'var(--color-primary)' }}>
+              SA
+            </div>
           </div>
         </header>
 
-        <div className="p-6 max-w-7xl mx-auto">
+        <main className="main-content">
           {loading ? (
-            <p className="text-blue-600 font-medium">Loading patients...</p>
+            <div className="flex-center" style={{ height: '50vh', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ width: '40px', height: '40px', border: '3px solid rgba(0, 240, 255, 0.1)', borderTopColor: 'var(--color-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+              <p style={{ color: 'var(--color-primary)', fontWeight: 500, letterSpacing: '1px' }}>SYNCING RECORDS...</p>
+            </div>
           ) : patients.length === 0 ? (
-            <p className="text-red-600 font-medium">No patients found.</p>
+            <div className="flex-center" style={{ height: '50vh' }}>
+              <div className="glass-panel" style={{ padding: '40px', textAlign: 'center', maxWidth: '400px' }}>
+                <div style={{ display: 'inline-flex', background: 'var(--color-danger-bg)', color: 'var(--color-danger)', padding: '16px', borderRadius: '50%', marginBottom: '16px' }}>
+                  <User size={32} />
+                </div>
+                <h3 style={{ fontSize: '1.25rem', marginBottom: '8px' }}>No Patients Found</h3>
+                <p className="text-muted" style={{ fontSize: '0.9rem' }}>The patient directory is currently empty. Add a patient to get started.</p>
+              </div>
+            </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '24px' }}>
               {patients.map((patient) => {
                 const isExpanded = expanded === patient.id;
                 return (
                   <div
                     key={patient.id}
                     onClick={() => handleCardClick(patient.id)}
-                    className={`group bg-white p-5 rounded-xl border border-gray-200 shadow-md transition-all duration-300 
-                                hover:shadow-lg hover:border-blue-400 cursor-pointer 
-                                ${isExpanded ? 'h-auto' : 'h-28'} overflow-hidden relative`}
+                    className="glass-card"
+                    style={{ padding: '24px', cursor: 'pointer', position: 'relative', overflow: 'hidden' }}
                   >
-                    <div className="flex justify-between items-center mb-2">
-                      <h3 className="text-lg font-semibold text-gray-800 truncate">
-                        {patient.name || 'Unnamed Patient'}
-                      </h3>
+                    {/* Decorative glow in corner */}
+                    <div style={{ position: 'absolute', top: '-20px', right: '-20px', width: '100px', height: '100px', background: 'radial-gradient(circle, var(--color-primary-glow) 0%, transparent 70%)', opacity: 0.5, pointerEvents: 'none' }}></div>
+                    
+                    <div className="flex-between" style={{ marginBottom: isExpanded ? '20px' : '0' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--color-border)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--color-text-main)', fontWeight: 600, fontSize: '1.25rem' }}>
+                          {(patient.name || 'U').charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <h3 style={{ fontSize: '1.125rem', margin: '0 0 4px 0', fontWeight: 600 }}>
+                            {patient.name || 'Unnamed Patient'}
+                          </h3>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+                            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--color-success)', boxShadow: '0 0 8px var(--color-success)' }}></span>
+                            Monitoring Active
+                          </div>
+                        </div>
+                      </div>
+                      
                       <button
                         onClick={(e) => toggleExpand(e, patient.id)}
-                        className="px-3 py-1 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700 shadow-sm"
+                        className="btn-outline"
+                        style={{ padding: '6px 12px', fontSize: '0.75rem' }}
                       >
-                        {isExpanded ? 'Hide' : 'View'}
+                        {isExpanded ? 'Hide Details' : 'View'}
                       </button>
                     </div>
 
-                    {isExpanded && (
-                      <div className="text-sm space-y-1 animate-fade-in mt-2">
-                        <p className="flex items-center gap-2">
-                          <Hash size={16} className="text-blue-500" />
-                          <span className="font-medium">ID:</span> {patient.id}
-                        </p>
-                        <p className="flex items-center gap-2">
-                          <Wallet size={16} className="text-blue-500" />
-                          <span className="font-medium">Insurance:</span> {patient.insurance_id || 'N/A'}
-                        </p>
-                        <p className="flex items-center gap-2">
-                          <Calendar size={16} className="text-blue-500" />
-                          <span className="font-medium">DOB:</span>{' '}
-                          {new Date(patient.dob).toLocaleDateString('en-IN')}
-                        </p>
-                        <p className="flex items-center gap-2">
-                          <User size={16} className="text-blue-500" />
-                          <span className="font-medium">Gender:</span> {patient.gender}
-                        </p>
-                        <p className="flex items-center gap-2">
-                          <Hospital size={16} className="text-blue-500" />
-                          <span className="font-medium">Hospital:</span>{' '}
-                          {patient.hospital_name || `#${patient.hospital_id}`}
-                        </p>
-                        <p className="flex items-center gap-2">
-                          <MapPin size={16} className="text-blue-500" />
-                          <span className="font-medium">Location:</span> {patient.location || 'N/A'}
-                        </p>
+                    <div style={{ 
+                      display: 'grid', 
+                      gridTemplateRows: isExpanded ? '1fr' : '0fr', 
+                      transition: 'grid-template-rows var(--transition-normal)'
+                    }}>
+                      <div style={{ overflow: 'hidden' }}>
+                        <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--color-border)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', fontSize: '0.875rem' }} className="animate-fade-in">
+                          
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <span className="text-muted" style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Patient ID</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#fff' }}>
+                              <Hash size={14} style={{ color: 'var(--color-primary)' }} />
+                              {patient.id}
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <span className="text-muted" style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Insurance</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#fff' }}>
+                              <Wallet size={14} style={{ color: 'var(--color-primary)' }} />
+                              {patient.insurance_id || 'N/A'}
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <span className="text-muted" style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>DOB</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#fff' }}>
+                              <Calendar size={14} style={{ color: 'var(--color-primary)' }} />
+                              {new Date(patient.dob).toLocaleDateString('en-IN')}
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <span className="text-muted" style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Gender</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#fff' }}>
+                              <User size={14} style={{ color: 'var(--color-primary)' }} />
+                              {patient.gender}
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1' }}>
+                            <span className="text-muted" style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Hospital</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#fff' }}>
+                              <Hospital size={14} style={{ color: 'var(--color-primary)' }} />
+                              {patient.hospital_name || `#${patient.hospital_id}`}
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1' }}>
+                            <span className="text-muted" style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Location</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#fff' }}>
+                              <MapPin size={14} style={{ color: 'var(--color-primary)' }} />
+                              {patient.location || 'N/A'}
+                            </div>
+                          </div>
+                          
+                        </div>
                       </div>
-                    )}
+                    </div>
                   </div>
                 );
               })}
             </div>
           )}
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 };
