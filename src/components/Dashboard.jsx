@@ -24,7 +24,7 @@ const Dashboard = () => {
 
     try {
       const response = await fetch(
-        'https://csvchecker-eufzfuchhjd5b2dk.centralindia-01.azurewebsites.net/getAllpatients'
+        `${import.meta.env.VITE_API_BASE_URL || 'https://api.arogyasync.com'}/getAllpatients`
       );
       if (response.ok) {
         const result = await response.json();

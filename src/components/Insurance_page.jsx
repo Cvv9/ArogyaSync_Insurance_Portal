@@ -58,7 +58,7 @@ const InsurancePage = () => {
 
     try {
       const res = await fetch(
-        'https://csvchecker-eufzfuchhjd5b2dk.centralindia-01.azurewebsites.net/getPatientTest',
+        `${import.meta.env.VITE_API_BASE_URL || 'https://api.arogyasync.com'}/getPatientTest`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
