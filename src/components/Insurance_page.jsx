@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldCheck, CalendarDays, IdCard } from 'lucide-react';
+import { API_URL, API_KEY } from '../api';
 
 const InsurancePage = () => {
   const navigate = useNavigate();
