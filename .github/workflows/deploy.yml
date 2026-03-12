@@ -26,7 +26,7 @@ jobs:
         run: npm run build
         env:
           VITE_API_BASE_URL: https://api.arogyasync.com/csv
-          VITE_API_KEY: 709f39e0b5619f877a9a691c3079576e02326724cb649cbb2e65495e71a2494e
+          VITE_API_KEY: f60f1a928fdb147ead54e07105891acc26b74214eff62000519efb5581000c0a
 
       - name: Upload build artifact
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
