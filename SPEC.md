@@ -1,4 +1,4 @@
-# ArogyaSync CSV Checker Frontend — Specification & Reference
+# ArogyaSync Insurance Portal — Specification & Reference
 
 > **Last updated:** 2026-03-02
 > Quick-reference document. Read this to get full context without scanning every source file.
@@ -20,7 +20,7 @@ React SPA frontend for the Insurance/Fraud Detection portal. Allows insurance co
 ## 3. Project Structure
 
 ```
-ArogyaSync_csv_checker_Frontend/
+ArogyaSync_Insurance_Portal/
 ├── src/
 │   ├── App.jsx              # Root component with routing
 │   ├── App.css              # Styles
