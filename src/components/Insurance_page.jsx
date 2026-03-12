@@ -42,8 +42,8 @@ const InsurancePage = () => {
         }
       );
 
+      const data = await res.json();
       if (res.ok) {
-        const data = await res.json();
         navigate('/next-page', {
           state: {
             records: data,
@@ -52,7 +52,7 @@ const InsurancePage = () => {
           }
         });
       } else {
-        setError('Invalid insurance details. Please check and try again.');
+        setError(data?.error || 'Invalid insurance details. Please check and try again.');
       }
     } catch (err) {
       console.error(err);
@@ -89,7 +89,7 @@ const InsurancePage = () => {
             </div>
           </div>
 
-          <p className="text-xs mt-8 text-blue-200">© 2025 Insurance Portal • All Rights Reserved</p>
+          <p className="text-xs mt-8 text-blue-200">© 2026 Insurance Portal • All Rights Reserved</p>
         </div>
 
         {/* Right Panel */}
