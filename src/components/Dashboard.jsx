@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Hospital, MapPin, Hash, Bell, User, Calendar, Wallet
-} from 'lucide-react'; // ✅ added icons
+} from 'lucide-react';
+import { API_URL, API_KEY } from '../api';
 
 const Dashboard = () => {
   const [patients, setPatients] = useState([]);
@@ -17,7 +18,10 @@ const Dashboard = () => {
   const fetchAllPatients = async () => {
     try {
       const response = await fetch(
-        'https://csvchecker-eufzfuchhjd5b2dk.centralindia-01.azurewebsites.net/getAllpatients'
+        `${API_URL}/getAllpatients`,
+        {
+          headers: { 'X-API-Key': API_KEY },
+        }
       );
       const result = await response.json();
       setPatients(result);

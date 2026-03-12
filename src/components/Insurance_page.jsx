@@ -31,10 +31,13 @@ const InsurancePage = () => {
     setLoading(true);
     try {
       const res = await fetch(
-        'https://csvchecker-eufzfuchhjd5b2dk.centralindia-01.azurewebsites.net/getPatientTest',
+        `${API_URL}/getPatientTest`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'X-API-Key': API_KEY,
+          },
           body: JSON.stringify(formData)
         }
       );
