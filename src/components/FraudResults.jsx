@@ -214,7 +214,7 @@ export default function FraudResults() {
                 return (
                   <tr key={rec.id} className="group">
                     <td className="px-4 py-3 text-text-muted">{i + 1}</td>
-                    <td className="px-4 py-3 font-mono text-text-light text-xs">{rec.deviceId}</td>
+                    <td className="px-4 py-3 font-mono text-text-light text-xs">{rec.deviceId || <span className="text-text-muted italic">—</span>}</td>
                     <td className="px-4 py-3">
                       <StatusBadge status={rec.status} />
                     </td>
