@@ -1,5 +1,5 @@
 // src/App.jsx — Root with route structure + error boundary
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import PatientLookup from './components/PatientLookup';
 import FraudResults from './components/FraudResults';
@@ -9,7 +9,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 export default function App() {
   return (
     <ErrorBoundary>
-      <BrowserRouter>
+      <HashRouter>
         <Routes>
           <Route element={<Layout />}>
             <Route path="/" element={<PatientLookup />} />
@@ -17,7 +17,7 @@ export default function App() {
             <Route path="/dashboard" element={<Dashboard />} />
           </Route>
         </Routes>
-      </BrowserRouter>
+      </HashRouter>
     </ErrorBoundary>
   );
 }
