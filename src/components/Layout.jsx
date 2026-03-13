@@ -7,7 +7,6 @@ import {
   FileText,
   Menu,
   X,
-  ShieldCheck,
 } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -36,8 +35,8 @@ export default function Layout() {
       >
         {/* Logo */}
         <div className="flex items-center gap-3 px-6 py-5 border-b border-border-glass">
-          <div className="w-9 h-9 rounded-lg bg-accent-cyan/20 flex items-center justify-center">
-            <ShieldCheck className="w-5 h-5 text-accent-cyan" />
+          <div className="w-9 h-9 rounded-lg bg-accent-cyan/15 flex items-center justify-center overflow-hidden border border-accent-cyan/20">
+            <img src="/app_logo.png" alt="ArogyaSync" className="w-7 h-7 object-contain" />
           </div>
           <div>
             <span className="text-text-white font-semibold text-base tracking-tight">ArogyaSync</span>
