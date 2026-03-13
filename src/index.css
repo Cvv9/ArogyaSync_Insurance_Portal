@@ -1,1 +1,53 @@
 @import "tailwindcss";
+
+@theme {
+  /* ── Dark Professional Design System ── */
+
+  /* Surface colors */
+  --color-surface-dark: #1A2B4A;
+  --color-surface-darker: #0F1B33;
+  --color-surface-card: #243656;
+  --color-surface-card-hover: #2D4068;
+
+  /* Accent colors */
+  --color-accent-cyan: #00BCD4;
+  --color-accent-cyan-light: rgba(0, 188, 212, 0.15);
+  --color-accent-amber: #FFA726;
+  --color-accent-amber-light: rgba(255, 167, 38, 0.15);
+  --color-accent-red: #F44336;
+  --color-accent-red-light: rgba(244, 67, 54, 0.15);
+  --color-accent-green: #4CAF50;
+  --color-accent-green-light: rgba(76, 175, 80, 0.15);
+
+  /* Text */
+  --color-text-white: #FFFFFF;
+  --color-text-light: #B0BEC5;
+  --color-text-muted: #78909C;
+
+  /* Borders */
+  --color-border-glass: rgba(255, 255, 255, 0.12);
+  --color-border-subtle: rgba(255, 255, 255, 0.06);
+
+  /* Typography */
+  --font-sans: 'Inter', 'Poppins', system-ui, sans-serif;
+
+  /* Shadows */
+  --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.3);
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.2);
+  --shadow-card-hover: 0 4px 20px rgba(0, 0, 0, 0.35);
+
+  /* Border radius */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-pill: 9999px;
+
+  /* Animations */
+  --animate-shimmer: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
