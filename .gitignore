@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment — .env.local holds sensitive overrides (Vite convention)
+.env.local
+.env.*.local
