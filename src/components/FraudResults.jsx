@@ -1,15 +1,24 @@
-// src/components/FraudResults.jsx — Fraud scan results table with deviation visualization + CSV export
-import { useState } from 'react';
+// src/components/FraudResults.jsx — Fraud scan results table + Vital Explorer with on-demand CSV comparison
+import { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
   ChevronDown,
   ChevronUp,
+  ChevronLeft,
+  ChevronRight,
   CheckCircle2,
   AlertTriangle,
   FileWarning,
   Download,
+  Search,
+  Loader2,
+  Database,
+  FileSearch,
 } from 'lucide-react';
+import { getPatientVitals, compareVital } from '../api';
+
+/* ─── Shared sub-components ─── */
 
 function StatusBadge({ status }) {
   const isMatch = status === 'match';
@@ -68,23 +77,84 @@ function DeviationBar({ label, csvVal, dbVal }) {
   );
 }
 
-function MismatchDetail({ vitals }) {
-  if (!vitals || Object.keys(vitals).length === 0) return null;
+function ComparisonDetail({ comparedFields, mismatchVitals, status }) {
+  const hasCompared = comparedFields && Object.keys(comparedFields).length > 0;
+  const hasMismatch = mismatchVitals && Object.keys(mismatchVitals).length > 0;
+
+  if (!hasCompared && !hasMismatch) {
+    return (
+      <div className="bg-surface-darker border border-border-glass rounded-lg p-4 mt-2 text-center">
+        <CheckCircle2 className="w-5 h-5 text-accent-green mx-auto mb-1.5" />
+        <p className="text-xs text-text-muted">All vitals verified — no detailed data stored for this scan.</p>
+      </div>
+    );
+  }
+
+  // Legacy record: only mismatch data
+  if (!hasCompared && hasMismatch) {
+    return (
+      <div className="bg-surface-darker border border-accent-red/20 rounded-lg p-4 mt-2">
+        <h4 className="text-xs font-semibold text-accent-red flex items-center gap-1.5 mb-3">
+          <FileWarning className="w-3.5 h-3.5" />
+          Mismatched Vitals — {Object.keys(mismatchVitals).length} field{Object.keys(mismatchVitals).length !== 1 ? 's' : ''}
+        </h4>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {Object.entries(mismatchVitals).map(([vitalName, values]) => (
+            <DeviationBar key={vitalName} label={vitalName} csvVal={values.csv} dbVal={values.db} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Full comparison view — all fields
+  const isMatch = status === 'match';
+  const borderColor = isMatch ? 'border-accent-green/20' : 'border-accent-red/20';
+  const matchedCount = Object.values(comparedFields).filter(v => v.match === true).length;
+  const mismatchedCount = Object.values(comparedFields).filter(v => v.match === false).length;
 
   return (
-    <div className="bg-surface-darker border border-accent-red/20 rounded-lg p-4 mt-2">
-      <h4 className="text-xs font-semibold text-accent-red flex items-center gap-1.5 mb-3">
-        <FileWarning className="w-3.5 h-3.5" />
-        Mismatched Vitals — {Object.keys(vitals).length} field{Object.keys(vitals).length !== 1 ? 's' : ''}
-      </h4>
+    <div className={`bg-surface-darker border ${borderColor} rounded-lg p-4 mt-2`}>
+      <div className="flex items-center justify-between mb-3">
+        <h4 className={`text-xs font-semibold flex items-center gap-1.5 ${isMatch ? 'text-accent-green' : 'text-accent-red'}`}>
+          {isMatch ? <CheckCircle2 className="w-3.5 h-3.5" /> : <FileWarning className="w-3.5 h-3.5" />}
+          Vital Comparison — {matchedCount} matched{mismatchedCount > 0 ? `, ${mismatchedCount} mismatched` : ''}
+        </h4>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        {Object.entries(vitals).map(([vitalName, values]) => (
-          <DeviationBar key={vitalName} label={vitalName} csvVal={values.csv} dbVal={values.db} />
-        ))}
+        {Object.entries(comparedFields).map(([field, values]) => {
+          const fieldMatch = values.match;
+          if (fieldMatch === false) {
+            return <DeviationBar key={field} label={field} csvVal={values.csv} dbVal={values.db} />;
+          }
+          return (
+            <div key={field} className="bg-surface-card border border-border-subtle rounded-lg p-3">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-text-light capitalize">
+                  {field.replace(/_/g, ' ')}
+                </span>
+                <CheckCircle2 className="w-3 h-3 text-accent-green" />
+              </div>
+              <div className="flex items-center gap-3 text-xs">
+                <div className="flex-1">
+                  <span className="text-text-muted text-[10px] block mb-0.5">CSV (Cold)</span>
+                  <span className="text-accent-cyan font-mono font-semibold">{values.csv ?? '—'}</span>
+                </div>
+                <div className="w-px h-6 bg-border-glass" />
+                <div className="flex-1">
+                  <span className="text-text-muted text-[10px] block mb-0.5">DB (Hot)</span>
+                  <span className="text-text-light font-mono font-semibold">{values.db ?? '—'}</span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 }
+
+/* ─── CSV Export ─── */
 
 function exportToCSV(records, patientName) {
   const headers = ['#', 'Device ID', 'Status', 'Checked At', 'Recorded At', 'Total Vitals', 'Mismatches', 'Mismatched Fields'];
@@ -109,10 +179,226 @@ function exportToCSV(records, patientName) {
   URL.revokeObjectURL(url);
 }
 
+/* ─── Vital Explorer ─── */
+
+function VitalExplorer({ patientId }) {
+  const [vitals, setVitals] = useState([]);
+  const [pagination, setPagination] = useState({ page: 1, total_pages: 1, total: 0 });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [comparingId, setComparingId] = useState(null);
+  const [comparisonResult, setComparisonResult] = useState(null);
+
+  const fetchVitals = useCallback(async (page = 1) => {
+    setLoading(true);
+    setError('');
+    try {
+      const data = await getPatientVitals(patientId, page, 10);
+      setVitals(data.data || []);
+      setPagination(data.pagination || { page: 1, total_pages: 1, total: 0 });
+    } catch (err) {
+      setError(err.message || 'Failed to load vitals');
+    } finally {
+      setLoading(false);
+    }
+  }, [patientId]);
+
+  useEffect(() => {
+    if (patientId) fetchVitals(1);
+  }, [patientId, fetchVitals]);
+
+  const handleCompare = async (vital) => {
+    setComparingId(vital.id);
+    setComparisonResult(null);
+    try {
+      const result = await compareVital({
+        record_time: vital.record_time,
+        sensor_id: vital.sensor_id,
+      });
+      setComparisonResult(result);
+    } catch (err) {
+      setComparisonResult({ error: err.message });
+    } finally {
+      setComparingId(null);
+    }
+  };
+
+  if (!patientId) return null;
+
+  return (
+    <div className="mt-8">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-lg font-semibold text-text-white flex items-center gap-2">
+            <Database className="w-5 h-5 text-accent-cyan" />
+            Vital Explorer
+          </h2>
+          <p className="text-xs text-text-muted mt-0.5">
+            Browse raw vitals from the database and compare any record against its CSV backup.
+          </p>
+        </div>
+        {pagination.total > 0 && (
+          <span className="text-xs text-text-muted">{pagination.total} records</span>
+        )}
+      </div>
+
+      <div className="bg-surface-card border border-border-glass rounded-xl overflow-hidden shadow-card">
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-5 h-5 text-accent-cyan animate-spin" />
+            <span className="ml-2 text-sm text-text-muted">Loading vitals...</span>
+          </div>
+        ) : error ? (
+          <div className="px-4 py-8 text-center">
+            <p className="text-sm text-accent-red">{error}</p>
+            <button onClick={() => fetchVitals(1)} className="mt-2 text-xs text-accent-cyan hover:underline">
+              Retry
+            </button>
+          </div>
+        ) : vitals.length === 0 ? (
+          <div className="px-4 py-12 text-center">
+            <Database className="w-8 h-8 text-text-muted mx-auto mb-2" />
+            <p className="text-sm text-text-muted">No vitals found for this patient.</p>
+          </div>
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border-glass bg-surface-dark/50">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Recorded At</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Device</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">HR</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">SpO2</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">BP</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Temp</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">RR</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border-subtle">
+                  {vitals.map((v) => (
+                    <tr key={v.id} className="group hover:bg-white/[0.02]">
+                      <td className="px-4 py-3 text-text-muted text-xs">
+                        {new Date(v.record_time).toLocaleString()}
+                      </td>
+                      <td className="px-4 py-3 font-mono text-text-light text-xs">{v.sensor_id ?? '—'}</td>
+                      <td className="px-4 py-3 font-mono text-text-light text-xs">{v.heart_rate ?? '—'}</td>
+                      <td className="px-4 py-3 font-mono text-text-light text-xs">{v.sp_o2 ?? '—'}</td>
+                      <td className="px-4 py-3 font-mono text-text-light text-xs">{v.blood_pressure ?? '—'}</td>
+                      <td className="px-4 py-3 font-mono text-text-light text-xs">{v.temperature ?? '—'}</td>
+                      <td className="px-4 py-3 font-mono text-text-light text-xs">{v.respiration ?? '—'}</td>
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() => handleCompare(v)}
+                          disabled={comparingId === v.id}
+                          className="flex items-center gap-1 text-xs text-accent-cyan hover:text-accent-cyan/80
+                            font-medium transition-colors disabled:opacity-50"
+                        >
+                          {comparingId === v.id ? (
+                            <><Loader2 className="w-3 h-3 animate-spin" /> Checking...</>
+                          ) : (
+                            <><FileSearch className="w-3 h-3" /> Compare</>
+                          )}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {pagination.total_pages > 1 && (
+              <div className="flex items-center justify-between px-4 py-3 border-t border-border-glass">
+                <span className="text-xs text-text-muted">
+                  Page {pagination.page} of {pagination.total_pages}
+                </span>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => fetchVitals(pagination.page - 1)}
+                    disabled={pagination.page <= 1}
+                    className="p-1.5 rounded-md text-text-muted hover:text-text-light hover:bg-white/5
+                      disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => fetchVitals(pagination.page + 1)}
+                    disabled={pagination.page >= pagination.total_pages}
+                    className="p-1.5 rounded-md text-text-muted hover:text-text-light hover:bg-white/5
+                      disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* On-demand comparison result */}
+        {comparisonResult && (
+          <div className="border-t border-border-glass px-4 py-4">
+            {comparisonResult.error ? (
+              <div className="bg-accent-red/10 border border-accent-red/20 rounded-lg p-3 text-center">
+                <p className="text-xs text-accent-red">{comparisonResult.error}</p>
+              </div>
+            ) : comparisonResult.comparison ? (
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-xs font-semibold text-text-white flex items-center gap-1.5">
+                    <FileSearch className="w-3.5 h-3.5 text-accent-cyan" />
+                    On-Demand Comparison Result
+                    {comparisonResult.csv_file && (
+                      <span className="text-text-muted font-normal ml-2">
+                        CSV: {comparisonResult.csv_file}
+                      </span>
+                    )}
+                  </h4>
+                  <StatusBadge status={comparisonResult.status} />
+                </div>
+                <ComparisonDetail
+                  comparedFields={comparisonResult.comparison}
+                  status={comparisonResult.status}
+                />
+                <button
+                  onClick={() => setComparisonResult(null)}
+                  className="mt-3 text-xs text-text-muted hover:text-text-light transition-colors"
+                >
+                  Dismiss
+                </button>
+              </div>
+            ) : (
+              <div className="bg-surface-darker border border-border-glass rounded-lg p-4 text-center">
+                <Search className="w-5 h-5 text-text-muted mx-auto mb-1.5" />
+                <p className="text-xs text-text-muted">
+                  {comparisonResult.message || 'No matching CSV record found for this vital.'}
+                </p>
+                <p className="text-[10px] text-text-muted mt-1">
+                  The DB record exists but no corresponding row was found in any CSV file.
+                </p>
+                <button
+                  onClick={() => setComparisonResult(null)}
+                  className="mt-3 text-xs text-text-muted hover:text-text-light transition-colors"
+                >
+                  Dismiss
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Main Component ─── */
+
 export default function FraudResults() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { records = [], patientName, patientDob } = location.state || {};
+  const { records = [], patientId, patientName, patientDob } = location.state || {};
   const [expandedRow, setExpandedRow] = useState(null);
 
   if (!location.state || records.length === 0) {
@@ -233,17 +519,13 @@ export default function FraudResults() {
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      {rec.status === 'mismatch' ? (
-                        <button
-                          onClick={() => setExpandedRow(isExpanded ? null : rec.id)}
-                          className="flex items-center gap-1 text-xs text-accent-cyan hover:text-accent-cyan/80 font-medium transition-colors"
-                        >
-                          {isExpanded ? 'Hide' : 'Details'}
-                          {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                        </button>
-                      ) : (
-                        <span className="text-xs text-text-muted">&mdash;</span>
-                      )}
+                      <button
+                        onClick={() => setExpandedRow(isExpanded ? null : rec.id)}
+                        className="flex items-center gap-1 text-xs text-accent-cyan hover:text-accent-cyan/80 font-medium transition-colors"
+                      >
+                        {isExpanded ? 'Hide' : 'View'}
+                        {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                      </button>
                     </td>
                   </tr>
                 );
@@ -252,17 +534,24 @@ export default function FraudResults() {
           </table>
         </div>
 
-        {/* Expanded mismatch detail — rendered outside table to avoid invalid HTML */}
+        {/* Expanded comparison detail — rendered outside table to avoid invalid HTML */}
         {expandedRow && (() => {
           const rec = records.find(r => r.id === expandedRow);
           if (!rec) return null;
           return (
             <div className="border-t border-border-glass px-4 py-3">
-              <MismatchDetail vitals={rec.mismatchvitals} />
+              <ComparisonDetail
+                comparedFields={rec.comparedFields}
+                mismatchVitals={rec.mismatchvitals}
+                status={rec.status}
+              />
             </div>
           );
         })()}
       </div>
+
+      {/* Vital Explorer — on-demand comparison */}
+      <VitalExplorer patientId={patientId} />
     </div>
   );
 }
