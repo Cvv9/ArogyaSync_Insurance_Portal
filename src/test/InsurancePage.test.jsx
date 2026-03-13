@@ -1,160 +1,112 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router-dom'
-import InsurancePage from '../components/Insurance_page'
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import PatientLookup from '../components/PatientLookup';
 
-// Mock react-router-dom's useNavigate
-const mockNavigate = vi.fn()
+const mockNavigate = vi.fn();
 vi.mock('react-router-dom', async () => {
-    const actual = await vi.importActual('react-router-dom')
-    return {
-        ...actual,
-        useNavigate: () => mockNavigate,
-    }
-})
+  const actual = await vi.importActual('react-router-dom');
+  return { ...actual, useNavigate: () => mockNavigate };
+});
 
-// Helper to get the date input (type="date" input, no placeholder)
-const getDateInput = () => document.querySelector('input[type="date"]')
+vi.mock('../api', () => ({
+  getPatientTest: vi.fn(),
+}));
 
-describe('InsurancePage', () => {
-    beforeEach(() => {
-        vi.clearAllMocks()
-        global.fetch = vi.fn()
-    })
+import { getPatientTest } from '../api';
 
-    const renderComponent = () =>
-        render(
-            <MemoryRouter>
-                <InsurancePage />
-            </MemoryRouter>
-        )
+function renderComponent() {
+  return render(
+    <MemoryRouter>
+      <PatientLookup />
+    </MemoryRouter>
+  );
+}
 
-    it('renders the insurance form with all fields', () => {
-        renderComponent()
-        expect(screen.getByText('Patient Insurance Portal')).toBeInTheDocument()
-        expect(screen.getByPlaceholderText('John Doe')).toBeInTheDocument()
-        expect(screen.getByText('Date of Birth')).toBeInTheDocument()
-        expect(getDateInput()).toBeTruthy()
-        expect(screen.getByPlaceholderText('INS123456')).toBeInTheDocument()
-        expect(screen.getByRole('button', { name: /submit/i })).toBeInTheDocument()
-    })
+const getDateInput = () => document.querySelector('input[type="date"]');
 
-    it('renders left panel info icons and text', () => {
-        renderComponent()
-        expect(screen.getByText('Secure & Encrypted Submission')).toBeInTheDocument()
-        expect(screen.getByText('Verify via Insurance ID')).toBeInTheDocument()
-        expect(screen.getByText('Check coverage date records')).toBeInTheDocument()
-    })
+describe('PatientLookup', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
-    it('updates form fields on user input', async () => {
-        renderComponent()
-        const user = userEvent.setup()
+  it('renders the form with all fields', () => {
+    renderComponent();
+    expect(screen.getByText('Patient Lookup')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('John Doe')).toBeInTheDocument();
+    expect(getDateInput()).toBeTruthy();
+    expect(screen.getByPlaceholderText('INS123456')).toBeInTheDocument();
+    expect(screen.getByText('Search Records')).toBeInTheDocument();
+  });
 
-        const nameInput = screen.getByPlaceholderText('John Doe')
-        const insuranceInput = screen.getByPlaceholderText('INS123456')
+  it('renders feature badges', () => {
+    renderComponent();
+    expect(screen.getByText('Encrypted')).toBeInTheDocument();
+    expect(screen.getByText('ID Verified')).toBeInTheDocument();
+    expect(screen.getByText('Date Validated')).toBeInTheDocument();
+  });
 
-        await user.type(nameInput, 'Jane Smith')
-        await user.type(insuranceInput, 'INS789012')
+  it('updates form fields on change', () => {
+    renderComponent();
+    const nameInput = screen.getByPlaceholderText('John Doe');
+    fireEvent.change(nameInput, { target: { name: 'name', value: 'Jane Smith' } });
+    expect(nameInput.value).toBe('Jane Smith');
+  });
 
-        expect(nameInput).toHaveValue('Jane Smith')
-        expect(insuranceInput).toHaveValue('INS789012')
-    })
+  it('shows loading state during submission', async () => {
+    getPatientTest.mockImplementation(() => new Promise(() => {}));
+    renderComponent();
 
-    it('shows loading state during submission', async () => {
-        // Make fetch hang
-        global.fetch = vi.fn(() => new Promise(() => { }))
+    fireEvent.change(screen.getByPlaceholderText('John Doe'), {
+      target: { name: 'name', value: 'Test' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('INS123456'), {
+      target: { name: 'insuranceId', value: 'INS123' },
+    });
+    fireEvent.change(getDateInput(), { target: { value: '2000-01-15' } });
+    fireEvent.submit(screen.getByText('Search Records').closest('form'));
 
-        renderComponent()
-        const user = userEvent.setup()
+    expect(await screen.findByText('Searching...')).toBeInTheDocument();
+  });
 
-        await user.type(screen.getByPlaceholderText('John Doe'), 'Test')
-        await user.type(screen.getByPlaceholderText('INS123456'), 'INS123')
+  it('navigates to /results on success', async () => {
+    const mockRecords = [{ id: 1, deviceId: 'D001', status: 'match' }];
+    getPatientTest.mockResolvedValue(mockRecords);
+    renderComponent();
 
-        // Set a date value using the DOM element directly
-        fireEvent.change(getDateInput(), { target: { value: '2000-01-15' } })
+    fireEvent.change(screen.getByPlaceholderText('John Doe'), {
+      target: { name: 'name', value: 'Test Patient' },
+    });
+    fireEvent.change(getDateInput(), { target: { value: '1990-05-10' } });
+    fireEvent.change(screen.getByPlaceholderText('INS123456'), {
+      target: { name: 'insuranceId', value: 'INS999' },
+    });
+    fireEvent.submit(screen.getByText('Search Records').closest('form'));
 
-        const submitButton = screen.getByRole('button', { name: /submit/i })
-        fireEvent.click(submitButton)
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('/results', {
+        state: {
+          records: mockRecords,
+          patientName: 'Test Patient',
+          patientDob: '1990-05-10',
+        },
+      });
+    });
+  });
 
-        await waitFor(() => {
-            expect(screen.getByText('Submitting...')).toBeInTheDocument()
-        })
-    })
+  it('shows error on API failure', async () => {
+    getPatientTest.mockRejectedValue(new Error('Patient not found'));
+    renderComponent();
 
-    it('navigates to results page on successful submission', async () => {
-        const mockRecords = [{ id: 1, deviceId: 'D001', status: 'match' }]
-        global.fetch = vi.fn(() =>
-            Promise.resolve({
-                ok: true,
-                json: () => Promise.resolve(mockRecords),
-            })
-        )
+    fireEvent.change(screen.getByPlaceholderText('John Doe'), {
+      target: { name: 'name', value: 'Bad' },
+    });
+    fireEvent.change(getDateInput(), { target: { value: '1985-03-20' } });
+    fireEvent.change(screen.getByPlaceholderText('INS123456'), {
+      target: { name: 'insuranceId', value: 'INVALID' },
+    });
+    fireEvent.submit(screen.getByText('Search Records').closest('form'));
 
-        renderComponent()
-
-        fireEvent.change(screen.getByPlaceholderText('John Doe'), {
-            target: { value: 'Test Patient' },
-        })
-        fireEvent.change(getDateInput(), { target: { value: '1990-05-10' } })
-        fireEvent.change(screen.getByPlaceholderText('INS123456'), {
-            target: { value: 'INS999' },
-        })
-
-        fireEvent.click(screen.getByRole('button', { name: /submit/i }))
-
-        await waitFor(() => {
-            expect(mockNavigate).toHaveBeenCalledWith('/next-page', {
-                state: {
-                    records: mockRecords,
-                    patientName: 'Test Patient',
-                    patientDob: '1990-05-10',
-                },
-            })
-        })
-    })
-
-    it('shows error message on failed API call', async () => {
-        global.fetch = vi.fn(() => Promise.resolve({ ok: false }))
-
-        renderComponent()
-
-        fireEvent.change(screen.getByPlaceholderText('John Doe'), {
-            target: { value: 'Bad Patient' },
-        })
-        fireEvent.change(getDateInput(), { target: { value: '1985-03-20' } })
-        fireEvent.change(screen.getByPlaceholderText('INS123456'), {
-            target: { value: 'INVALID' },
-        })
-
-        fireEvent.click(screen.getByRole('button', { name: /submit/i }))
-
-        await waitFor(() => {
-            expect(
-                screen.getByText('Invalid insurance details. Please check and try again.')
-            ).toBeInTheDocument()
-        })
-    })
-
-    it('shows error on network exception', async () => {
-        global.fetch = vi.fn(() => Promise.reject(new Error('Network error')))
-
-        renderComponent()
-
-        fireEvent.change(screen.getByPlaceholderText('John Doe'), {
-            target: { value: 'Offline' },
-        })
-        fireEvent.change(getDateInput(), { target: { value: '2000-01-01' } })
-        fireEvent.change(screen.getByPlaceholderText('INS123456'), {
-            target: { value: 'INS000' },
-        })
-
-        fireEvent.click(screen.getByRole('button', { name: /submit/i }))
-
-        await waitFor(() => {
-            expect(
-                screen.getByText('An unexpected error occurred. Please try again later.')
-            ).toBeInTheDocument()
-        })
-    })
-})
+    expect(await screen.findByText('Patient not found')).toBeInTheDocument();
+  });
+});

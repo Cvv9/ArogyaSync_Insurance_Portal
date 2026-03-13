@@ -1,21 +1,23 @@
-// src/App.jsx
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+// src/App.jsx — Root with route structure + error boundary
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Layout from './components/Layout';
+import PatientLookup from './components/PatientLookup';
+import FraudResults from './components/FraudResults';
+import Dashboard from './components/Dashboard';
+import ErrorBoundary from './components/ErrorBoundary';
 
-import InsurancePage from './components/Insurance_page';
-
-import NextPage from './components/Devices';
-
-function App() {
+export default function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<InsurancePage />} />
-        <Route path="/next-page" element={<NextPage />} />
-        {/* Add other routes as needed */}
-      </Routes>
-    </Router>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <Routes>
+          <Route element={<Layout />}>
+            <Route path="/" element={<PatientLookup />} />
+            <Route path="/results" element={<FraudResults />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
-
-export default App;
