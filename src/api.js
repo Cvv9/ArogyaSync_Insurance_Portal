@@ -37,3 +37,35 @@ export async function getPatientTest({ name, dob, insuranceId }) {
 export async function getAllTests(patientId) {
   return request(`/getAlltest/${patientId}`);
 }
+
+// ── Analytics Endpoints ──
+
+/** Aggregate stats: totals, match/mismatch rates, last scan */
+export async function getStatsSummary() {
+  return request('/stats/summary');
+}
+
+/** Mismatch trend over time */
+export async function getStatsTrends(period = 'daily', days = 30) {
+  return request(`/stats/trends?period=${period}&days=${days}`);
+}
+
+/** Which vital fields mismatch most frequently */
+export async function getFieldAnalysis() {
+  return request('/stats/field-analysis');
+}
+
+/** Devices with highest mismatch rates */
+export async function getProblematicDevices(limit = 10) {
+  return request(`/stats/devices/problematic?limit=${limit}`);
+}
+
+/** Per-patient risk score */
+export async function getPatientRisk(patientId) {
+  return request(`/stats/patient/${patientId}/risk`);
+}
+
+/** Blockchain anchor record for a file */
+export async function getAnchor(fileName) {
+  return request(`/anchor/${encodeURIComponent(fileName)}`);
+}
