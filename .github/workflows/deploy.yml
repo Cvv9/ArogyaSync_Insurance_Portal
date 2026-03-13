@@ -25,8 +25,8 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          VITE_API_BASE_URL: https://api.arogyasync.com/csv
-          VITE_API_KEY: f60f1a928fdb147ead54e07105891acc26b74214eff62000519efb5581000c0a
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_API_KEY: ${{ secrets.VITE_API_KEY }}
 
       - name: Upload build artifact
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -46,13 +46,13 @@ jobs:
           name: portal-dist
           path: dist/
 
-      - name: Deploy to Hostinger via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      - name: Deploy to Hostinger via SFTP
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
           server: ${{ secrets.FTP_HOST }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftps
-          local-dir: dist/
-          server-dir: insuranceportal/
-          dangerous-clean-slate: true
+          port: 22
+          local_path: dist/*
+          remote_path: /home/u123456789/domains/yourdomain.com/public_html/insuranceportal/
+          sftp_only: true
