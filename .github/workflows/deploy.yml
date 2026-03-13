@@ -54,5 +54,5 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           port: 65002
           local_path: dist/*
-          remote_path: /home/u123456789/domains/yourdomain.com/public_html/insuranceportal/
+          remote_path: /home/u995092877/domains/arogyasync.com/public_html/insuranceportal/
           sftp_only: true
