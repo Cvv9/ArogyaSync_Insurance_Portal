@@ -17,7 +17,7 @@ import {
   AlertTriangle,
   FileText,
 } from 'lucide-react';
-import { getAllPatients, getAllTests } from '../api';
+import { getAllPatients, getAllTests, getStatsSummary } from '../api';
 
 const COLOR_MAP = {
   'accent-cyan':  { bg: 'bg-accent-cyan-light', text: 'text-accent-cyan' },
