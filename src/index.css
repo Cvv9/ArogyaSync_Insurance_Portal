@@ -51,3 +51,11 @@
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
+
+/* Base styles — ensures dark background even before React hydrates */
+html, body, #root {
+  min-height: 100vh;
+  background-color: #0F1B33;
+  color: #B0BEC5;
+  font-family: 'Inter', 'Poppins', system-ui, sans-serif;
+}
