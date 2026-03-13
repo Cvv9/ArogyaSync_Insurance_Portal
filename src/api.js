@@ -9,15 +9,29 @@ const headers = () => ({
 });
 
 async function request(path, options = {}) {
-  const res = await fetch(`${API_URL}${path}`, {
-    headers: headers(),
-    ...options,
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data?.error || `Request failed (${res.status})`);
+  try {
+    const res = await fetch(`${API_URL}${path}`, {
+      headers: headers(),
+      ...options,
+    });
+
+    // Check if response is JSON
+    const contentType = res.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error(`API returned ${res.status}: Expected JSON but got ${contentType || 'unknown content type'}. Is the API server running at ${API_URL}?`);
+    }
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data?.error || `Request failed (${res.status})`);
+    }
+    return data;
+  } catch (err) {
+    if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+      throw new Error(`Cannot connect to API server at ${API_URL}. Is it running?`);
+    }
+    throw err;
   }
-  return data;
 }
 
 /** Fetch all registered patients */
