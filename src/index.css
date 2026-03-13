@@ -59,3 +59,11 @@ html, body, #root {
   color: #B0BEC5;
   font-family: 'Inter', 'Poppins', system-ui, sans-serif;
 }
+
+/* Make native date/time picker icons visible on dark backgrounds */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
