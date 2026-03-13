@@ -11,6 +11,9 @@ import {
   Loader2,
   AlertCircle,
   Activity,
+  BarChart3,
+  ShieldCheck,
+  ShieldAlert,
   ChevronRight,
   X,
   CheckCircle2,
@@ -226,6 +229,7 @@ function PatientDetailModal({ patient, onClose }) {
 
 export default function Dashboard() {
   const [patients, setPatients] = useState([]);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
@@ -235,8 +239,14 @@ export default function Dashboard() {
     let cancelled = false;
     (async () => {
       try {
-        const data = await getAllPatients();
-        if (!cancelled) setPatients(Array.isArray(data) ? data : []);
+        const [patientData, summaryData] = await Promise.all([
+          getAllPatients(),
+          getStatsSummary().catch(() => null),
+        ]);
+        if (!cancelled) {
+          setPatients(Array.isArray(patientData) ? patientData : []);
+          setStats(summaryData);
+        }
       } catch (err) {
         if (!cancelled) setError(err.message);
       } finally {
@@ -255,9 +265,6 @@ export default function Dashboard() {
     );
   });
 
-  // Derive stats from patient data
-  const hospitalCount = new Set(patients.map(p => p.hospital_id)).size;
-
   if (loading) {
     const shimmer = 'animate-shimmer bg-gradient-to-r from-surface-card via-surface-card-hover to-surface-card bg-[length:200%_100%]';
     return (
@@ -268,8 +275,8 @@ export default function Dashboard() {
             <div className={`h-4 w-48 rounded mt-2 ${shimmer}`} />
           </div>
         </div>
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
-          {[1, 2, 3].map(i => (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+          {[1, 2, 3, 4].map(i => (
             <div key={i} className="bg-surface-card border border-border-glass rounded-xl p-4 flex items-center gap-4">
               <div className={`w-10 h-10 rounded-lg ${shimmer}`} />
               <div className="flex-1">
@@ -330,10 +337,11 @@ export default function Dashboard() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
-        <StatCard icon={Users} label="Total Patients" value={patients.length} color="accent-cyan" />
-        <StatCard icon={Hospital} label="Hospitals" value={hospitalCount} color="accent-amber" />
-        <StatCard icon={Activity} label="Active Records" value={filtered.length} color="accent-green" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        <StatCard icon={Users} label="Total Patients" value={stats?.total_patients ?? patients.length} color="accent-cyan" />
+        <StatCard icon={BarChart3} label="Total Scans" value={stats?.total_records ?? '—'} color="accent-amber" />
+        <StatCard icon={ShieldCheck} label="Match Rate" value={stats ? `${stats.match_rate}%` : '—'} color="accent-green" />
+        <StatCard icon={ShieldAlert} label="Mismatch Rate" value={stats ? `${stats.mismatch_rate}%` : '—'} color="accent-red" />
       </div>
 
       {/* Patient grid */}
