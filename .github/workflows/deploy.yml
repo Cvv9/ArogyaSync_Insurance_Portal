@@ -51,7 +51,7 @@ jobs:
         with:
           server: ${{ secrets.FTP_HOST }}
           username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
+          ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 65002
           local_path: dist/*
           remote_path: /home/u995092877/domains/arogyasync.com/public_html/insuranceportal/
