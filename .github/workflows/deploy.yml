@@ -52,7 +52,7 @@ jobs:
           server: ${{ secrets.FTP_HOST }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          port: 22
+          port: 65002
           local_path: dist/*
           remote_path: /home/u123456789/domains/yourdomain.com/public_html/insuranceportal/
           sftp_only: true
