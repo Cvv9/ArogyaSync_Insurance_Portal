@@ -81,7 +81,7 @@ describe('FraudResults', () => {
     expect(screen.getByText('Match')).toBeInTheDocument();
   });
 
-  it('renders mismatch status with Details button', () => {
+  it('renders mismatch status with View button', () => {
     renderComponent({
       records: [
         {
@@ -102,7 +102,7 @@ describe('FraudResults', () => {
       patientDob: '1980-12-25',
     });
     expect(screen.getByText('Mismatch')).toBeInTheDocument();
-    expect(screen.getByText('Details')).toBeInTheDocument();
+    expect(screen.getByText('View')).toBeInTheDocument();
   });
 
   it('expands and collapses mismatch details', () => {
@@ -128,7 +128,7 @@ describe('FraudResults', () => {
 
     expect(screen.queryByText(/Mismatched Vitals/)).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByText('Details'));
+    fireEvent.click(screen.getByText('View'));
     expect(screen.getByText(/Mismatched Vitals/)).toBeInTheDocument();
     expect(screen.getByText('heart rate')).toBeInTheDocument();
 
@@ -136,7 +136,7 @@ describe('FraudResults', () => {
     expect(screen.queryByText(/Mismatched Vitals/)).not.toBeInTheDocument();
   });
 
-  it('does not show Details for match records', () => {
+  it('shows View button for match records too', () => {
     renderComponent({
       records: [
         {
@@ -152,6 +152,6 @@ describe('FraudResults', () => {
       patientName: 'Match Patient',
       patientDob: '2000-03-15',
     });
-    expect(screen.queryByText('Details')).not.toBeInTheDocument();
+    expect(screen.getByText('View')).toBeInTheDocument();
   });
 });

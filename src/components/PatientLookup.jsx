@@ -31,7 +31,8 @@ export default function PatientLookup() {
       const data = await getPatientTest(formData);
       navigate('/results', {
         state: {
-          records: data,
+          records: data.records || data,
+          patientId: data.patientId,
           patientName: formData.name,
           patientDob: formData.dob,
         },

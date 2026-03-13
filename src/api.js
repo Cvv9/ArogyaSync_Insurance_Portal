@@ -69,3 +69,18 @@ export async function getPatientRisk(patientId) {
 export async function getAnchor(fileName) {
   return request(`/anchor/${encodeURIComponent(fileName)}`);
 }
+
+// ── Vitals Browsing & On-Demand Comparison ──
+
+/** Paginated raw vitals from RDS for a patient */
+export async function getPatientVitals(patientId, page = 1, limit = 20) {
+  return request(`/vitals/patient/${patientId}?page=${page}&limit=${limit}`);
+}
+
+/** On-demand comparison of a single vital against CSV */
+export async function compareVital({ record_time, sensor_id }) {
+  return request('/compareVital', {
+    method: 'POST',
+    body: JSON.stringify({ record_time, sensor_id }),
+  });
+}

@@ -71,7 +71,7 @@ describe('PatientLookup', () => {
 
   it('navigates to /results on success', async () => {
     const mockRecords = [{ id: 1, deviceId: 'D001', status: 'match' }];
-    getPatientTest.mockResolvedValue(mockRecords);
+    getPatientTest.mockResolvedValue({ patientId: '42', records: mockRecords });
     renderComponent();
 
     fireEvent.change(screen.getByPlaceholderText('John Doe'), {
@@ -87,6 +87,7 @@ describe('PatientLookup', () => {
       expect(mockNavigate).toHaveBeenCalledWith('/results', {
         state: {
           records: mockRecords,
+          patientId: '42',
           patientName: 'Test Patient',
           patientDob: '1990-05-10',
         },
