@@ -23,6 +23,11 @@ dist-ssr
 *.sln
 *.sw?
 
+# Virtual environments
+venv/
+.venv/
+env/
+
 # Environment — .env.local holds sensitive overrides (Vite convention)
 .env.local
 .env.*.local
