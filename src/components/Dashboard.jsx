@@ -1,5 +1,5 @@
 // src/components/Dashboard.jsx — Analytics dashboard with patient listing
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Users,
@@ -49,6 +49,7 @@ function PatientDetailModal({ patient, onClose }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const modalRef = useRef(null);
 
   useEffect(() => {
     if (!patient) return;
@@ -66,6 +67,50 @@ function PatientDetailModal({ patient, onClose }) {
     return () => { cancelled = true; };
   }, [patient]);
 
+  // REM-051: Escape key handler
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [onClose]);
+
+  // REM-051: Focus trap
+  useEffect(() => {
+    if (!modalRef.current) return;
+
+    const focusableElements = modalRef.current.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    // Set initial focus
+    firstElement?.focus();
+
+    const handleTab = (e) => {
+      if (e.key !== 'Tab') return;
+
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          e.preventDefault();
+          lastElement?.focus();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          e.preventDefault();
+          firstElement?.focus();
+        }
+      }
+    };
+
+    modalRef.current.addEventListener('keydown', handleTab);
+    return () => modalRef.current?.removeEventListener('keydown', handleTab);
+  }, [tests, loading, error]); // Re-run when content changes
+
   if (!patient) return null;
 
   const totalScans = tests.length;
@@ -75,7 +120,7 @@ function PatientDetailModal({ patient, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} aria-hidden="true" />
-      <div className="relative bg-surface-dark border border-border-glass rounded-2xl shadow-glass w-full max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
+      <div ref={modalRef} className="relative bg-surface-dark border border-border-glass rounded-2xl shadow-glass w-full max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border-glass">
           <div>
