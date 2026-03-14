@@ -423,7 +423,8 @@ export default function FraudResults() {
 
   const totalScans = records.length;
   const mismatches = records.filter((r) => r.status === 'mismatch').length;
-  const matchRate = totalScans > 0 ? Math.round(((totalScans - mismatches) / totalScans) * 100) : 0;
+  const matchRateValue = totalScans > 0 ? ((totalScans - mismatches) / totalScans) * 100 : 0;
+  const matchRate = matchRateValue.toFixed(1);
 
   return (
     <div>
@@ -458,7 +459,7 @@ export default function FraudResults() {
               <div className="text-[10px] text-text-muted uppercase tracking-wide">Mismatches</div>
             </div>
             <div className="px-3 py-1.5 bg-surface-card border border-border-glass rounded-lg text-center">
-              <div className={`text-lg font-semibold ${matchRate >= 90 ? 'text-accent-green' : 'text-accent-amber'}`}>
+              <div className={`text-lg font-semibold ${matchRateValue >= 90 ? 'text-accent-green' : 'text-accent-amber'}`}>
                 {matchRate}%
               </div>
               <div className="text-[10px] text-text-muted uppercase tracking-wide">Match Rate</div>
