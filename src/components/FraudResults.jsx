@@ -229,8 +229,8 @@ function VitalExplorer({ patientId }) {
     <div className="mt-8">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-lg font-semibold text-text-white flex items-center gap-2">
-            <Database className="w-5 h-5 text-accent-cyan" />
+          <h2 id="vital-explorer-heading" className="text-lg font-semibold text-text-white flex items-center gap-2">
+            <Database className="w-5 h-5 text-accent-cyan" aria-hidden="true" />
             Vital Explorer
           </h2>
           <p className="text-xs text-text-muted mt-0.5">
@@ -238,11 +238,11 @@ function VitalExplorer({ patientId }) {
           </p>
         </div>
         {pagination.total > 0 && (
-          <span className="text-xs text-text-muted">{pagination.total} records</span>
+          <span className="text-xs text-text-muted" aria-live="polite">{pagination.total} records</span>
         )}
       </div>
 
-      <div className="bg-surface-card border border-border-glass rounded-xl overflow-hidden shadow-card">
+      <section className="bg-surface-card border border-border-glass rounded-xl overflow-hidden shadow-card" aria-labelledby="vital-explorer-heading">
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-5 h-5 text-accent-cyan animate-spin" />
@@ -292,13 +292,14 @@ function VitalExplorer({ patientId }) {
                         <button
                           onClick={() => handleCompare(v)}
                           disabled={comparingId === v.id}
+                          aria-label={comparingId === v.id ? "Comparing vital record against CSV" : "Compare this vital record against CSV backup"}
                           className="flex items-center gap-1 text-xs text-accent-cyan hover:text-accent-cyan/80
                             font-medium transition-colors disabled:opacity-50"
                         >
                           {comparingId === v.id ? (
-                            <><Loader2 className="w-3 h-3 animate-spin" /> Checking...</>
+                            <><Loader2 className="w-3 h-3 animate-spin" aria-hidden="true" /> Checking...</>
                           ) : (
-                            <><FileSearch className="w-3 h-3" /> Compare</>
+                            <><FileSearch className="w-3 h-3" aria-hidden="true" /> Compare</>
                           )}
                         </button>
                       </td>
@@ -310,29 +311,31 @@ function VitalExplorer({ patientId }) {
 
             {/* Pagination */}
             {pagination.total_pages > 1 && (
-              <div className="flex items-center justify-between px-4 py-3 border-t border-border-glass">
-                <span className="text-xs text-text-muted">
+              <nav className="flex items-center justify-between px-4 py-3 border-t border-border-glass" aria-label="Vital records pagination">
+                <span className="text-xs text-text-muted" aria-live="polite">
                   Page {pagination.page} of {pagination.total_pages}
                 </span>
-                <div className="flex gap-1">
+                <div className="flex gap-1" role="group">
                   <button
                     onClick={() => fetchVitals(pagination.page - 1)}
                     disabled={pagination.page <= 1}
+                    aria-label="Previous page"
                     className="p-1.5 rounded-md text-text-muted hover:text-text-light hover:bg-white/5
                       disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                   >
-                    <ChevronLeft className="w-4 h-4" />
+                    <ChevronLeft className="w-4 h-4" aria-hidden="true" />
                   </button>
                   <button
                     onClick={() => fetchVitals(pagination.page + 1)}
                     disabled={pagination.page >= pagination.total_pages}
+                    aria-label="Next page"
                     className="p-1.5 rounded-md text-text-muted hover:text-text-light hover:bg-white/5
                       disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                   >
-                    <ChevronRight className="w-4 h-4" />
+                    <ChevronRight className="w-4 h-4" aria-hidden="true" />
                   </button>
                 </div>
-              </div>
+              </nav>
             )}
           </>
         )}
@@ -522,10 +525,12 @@ export default function FraudResults() {
                     <td className="px-4 py-3">
                       <button
                         onClick={() => setExpandedRow(isExpanded ? null : rec.id)}
+                        aria-expanded={isExpanded}
+                        aria-label={isExpanded ? "Hide comparison details" : "View comparison details"}
                         className="flex items-center gap-1 text-xs text-accent-cyan hover:text-accent-cyan/80 font-medium transition-colors"
                       >
                         {isExpanded ? 'Hide' : 'View'}
-                        {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                        {isExpanded ? <ChevronUp className="w-3 h-3" aria-hidden="true" /> : <ChevronDown className="w-3 h-3" aria-hidden="true" />}
                       </button>
                     </td>
                   </tr>

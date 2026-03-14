@@ -73,17 +73,19 @@ function PatientDetailModal({ patient, onClose }) {
   const matchRate = totalScans > 0 ? Math.round(((totalScans - mismatches) / totalScans) * 100) : 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} aria-hidden="true" />
       <div className="relative bg-surface-dark border border-border-glass rounded-2xl shadow-glass w-full max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border-glass">
           <div>
-            <h2 className="text-base font-semibold text-text-white">{patient.name || 'Unknown'}</h2>
+            <h2 id="modal-title" className="text-base font-semibold text-text-white">{patient.name || 'Unknown'}</h2>
             <p className="text-xs text-text-muted mt-0.5">{patient.insurance_id || 'No Insurance ID'}</p>
           </div>
-          <button onClick={onClose} className="text-text-muted hover:text-text-white transition">
-            <X className="w-5 h-5" />
+          <button onClick={onClose}
+            aria-label="Close patient details modal"
+            className="text-text-muted hover:text-text-white transition">
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -316,7 +318,7 @@ export default function Dashboard() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div className="flex items-center gap-3">
-          <img src="/app_logo.png" alt="" className="w-10 h-10 object-contain hidden sm:block" />
+          <img src="/app_logo.png" alt="" className="w-10 h-10 object-contain hidden sm:block" aria-hidden="true" />
           <div>
             <h1 className="text-xl font-semibold text-text-white">Dashboard</h1>
             <p className="text-sm text-text-muted mt-0.5">Insurance verification overview</p>
@@ -325,12 +327,13 @@ export default function Dashboard() {
 
         {/* Search */}
         <div className="relative w-full sm:w-72">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" aria-hidden="true" />
           <input
-            type="text"
+            type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name or ID..."
+            aria-label="Search patients by name or insurance ID"
             className="w-full pl-9 pr-3 py-2 bg-surface-card border border-border-glass rounded-lg
               text-sm text-text-white placeholder:text-text-muted
               focus:outline-none focus:ring-2 focus:ring-accent-cyan/40 focus:border-accent-cyan/60
@@ -340,58 +343,61 @@ export default function Dashboard() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6" role="region" aria-label="Insurance verification statistics">
         <StatCard icon={Users} label="Total Patients" value={stats?.total_patients ?? patients.length} color="accent-cyan" />
         <StatCard icon={BarChart3} label="Total Scans" value={stats?.total_records ?? '—'} color="accent-amber" />
         <StatCard icon={ShieldCheck} label="Match Rate" value={stats ? `${stats.match_rate}%` : '—'} color="accent-green" />
         <StatCard icon={ShieldAlert} label="Mismatch Rate" value={stats ? `${stats.mismatch_rate}%` : '—'} color="accent-red" />
-      </div>
+      </section>
 
       {/* Patient grid */}
       {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <Users className="w-10 h-10 text-text-muted mb-3" />
+        <div className="flex flex-col items-center justify-center py-16 text-center" role="status">
+          <Users className="w-10 h-10 text-text-muted mb-3" aria-hidden="true" />
           <p className="text-sm text-text-muted">
             {search ? 'No patients match your search.' : 'No patients registered yet.'}
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" role="list">
           {filtered.map((patient) => (
-            <div
+            <button
               key={patient.id}
+              type="button"
               onClick={() => setSelectedPatient(patient)}
+              aria-label={`View details for ${patient.name || 'unnamed patient'}, insurance ID ${patient.insurance_id || 'not available'}`}
               className="bg-surface-card border border-border-glass rounded-xl p-4 cursor-pointer
-                hover:border-accent-cyan/30 hover:shadow-card-hover transition-all duration-200 group"
+                hover:border-accent-cyan/30 hover:shadow-card-hover transition-all duration-200 group text-left w-full"
+              role="listitem"
             >
               <div className="flex items-start justify-between mb-3">
                 <h3 className="text-sm font-semibold text-text-white group-hover:text-accent-cyan transition-colors truncate flex-1">
                   {patient.name || 'Unnamed Patient'}
                 </h3>
-                <ChevronRight className="w-4 h-4 text-text-muted group-hover:text-accent-cyan transition-colors flex-shrink-0 ml-2" />
+                <ChevronRight className="w-4 h-4 text-text-muted group-hover:text-accent-cyan transition-colors flex-shrink-0 ml-2" aria-hidden="true" />
               </div>
 
               <div className="space-y-1.5 text-xs text-text-muted">
                 <div className="flex items-center gap-2">
-                  <IdCard className="w-3.5 h-3.5 text-accent-cyan/60" />
+                  <IdCard className="w-3.5 h-3.5 text-accent-cyan/60" aria-hidden="true" />
                   <span>{patient.insurance_id || 'N/A'}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-3.5 h-3.5 text-accent-cyan/60" />
+                  <Calendar className="w-3.5 h-3.5 text-accent-cyan/60" aria-hidden="true" />
                   <span>{patient.dob ? new Date(patient.dob).toLocaleDateString('en-IN') : 'N/A'}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Hospital className="w-3.5 h-3.5 text-accent-cyan/60" />
+                  <Hospital className="w-3.5 h-3.5 text-accent-cyan/60" aria-hidden="true" />
                   <span>{patient.hospital_name || `Hospital #${patient.hospital_id}`}</span>
                 </div>
                 {patient.location && (
                   <div className="flex items-center gap-2">
-                    <MapPin className="w-3.5 h-3.5 text-accent-cyan/60" />
+                    <MapPin className="w-3.5 h-3.5 text-accent-cyan/60" aria-hidden="true" />
                     <span>{patient.location}</span>
                   </div>
                 )}
               </div>
-            </div>
+            </button>
           ))}
         </div>
       )}
