@@ -59,8 +59,9 @@ export default function PatientLookup() {
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Full Name */}
           <div>
-            <label className="block text-sm font-medium text-text-light mb-1.5">Full Name</label>
+            <label htmlFor="patient-name" className="block text-sm font-medium text-text-light mb-1.5">Full Name</label>
             <input
+              id="patient-name"
               type="text"
               name="name"
               value={formData.name}
@@ -76,8 +77,9 @@ export default function PatientLookup() {
 
           {/* Date of Birth */}
           <div>
-            <label className="block text-sm font-medium text-text-light mb-1.5">Date of Birth</label>
+            <label htmlFor="patient-dob" className="block text-sm font-medium text-text-light mb-1.5">Date of Birth</label>
             <input
+              id="patient-dob"
               type="date"
               name="dob"
               value={formData.dob}
@@ -92,8 +94,9 @@ export default function PatientLookup() {
 
           {/* Insurance ID */}
           <div>
-            <label className="block text-sm font-medium text-text-light mb-1.5">Insurance ID</label>
+            <label htmlFor="patient-insurance-id" className="block text-sm font-medium text-text-light mb-1.5">Insurance ID</label>
             <input
+              id="patient-insurance-id"
               type="text"
               name="insuranceId"
               value={formData.insuranceId}
