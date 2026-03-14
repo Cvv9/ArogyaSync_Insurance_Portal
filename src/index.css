@@ -22,7 +22,8 @@
   /* Text */
   --color-text-white: #FFFFFF;
   --color-text-light: #B0BEC5;
-  --color-text-muted: #78909C;
+  /* REM-064: Increased contrast for WCAG AA compliance (4.5:1 on dark backgrounds) */
+  --color-text-muted: #9DB4C0;
 
   /* Borders */
   --color-border-glass: rgba(255, 255, 255, 0.12);
