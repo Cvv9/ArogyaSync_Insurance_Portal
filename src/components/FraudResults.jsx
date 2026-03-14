@@ -391,7 +391,7 @@ function VitalExplorer({ patientId }) {
             )}
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }
