@@ -1,8 +1,10 @@
-// src/App.jsx — Root with auth-protected routes (UX-009)
+// src/App.jsx — Root with auth-protected routes
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Layout from './components/Layout';
 import LoginPage from './components/LoginPage';
+import RegisterPage from './components/RegisterPage';
+import VerifyEmail from './components/VerifyEmail';
 import PatientLookup from './components/PatientLookup';
 import FraudResults from './components/FraudResults';
 import Dashboard from './components/Dashboard';
@@ -27,6 +29,8 @@ export default function App() {
         <HashRouter>
           <Routes>
             <Route path="/login" element={<PublicOnlyRoute><LoginPage /></PublicOnlyRoute>} />
+            <Route path="/register" element={<PublicOnlyRoute><RegisterPage /></PublicOnlyRoute>} />
+            <Route path="/verify" element={<VerifyEmail />} />
             <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
               <Route path="/" element={<PatientLookup />} />
               <Route path="/results" element={<FraudResults />} />

@@ -17,7 +17,7 @@ const NAV_ITEMS = [
 
 export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { logout } = useAuth();
+  const { logout, agent } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -98,6 +98,17 @@ export default function Layout() {
             <Menu className="w-5 h-5" />
           </button>
           <div className="flex-1" />
+          {agent && (
+            <div className="hidden sm:flex items-center gap-2 text-xs text-text-muted mr-2">
+              <div className="w-7 h-7 rounded-full bg-accent-cyan/15 flex items-center justify-center text-accent-cyan font-semibold text-xs">
+                {agent.name?.charAt(0)?.toUpperCase() || '?'}
+              </div>
+              <div className="leading-tight">
+                <span className="block text-text-light font-medium">{agent.name}</span>
+                <span className="block text-[10px] text-text-muted">{agent.insurance_company}</span>
+              </div>
+            </div>
+          )}
           <button
             onClick={handleLogout}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-text-muted

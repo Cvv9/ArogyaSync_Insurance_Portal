@@ -1,16 +1,25 @@
-// src/api.js — Insurance Portal API service layer (UX-009: uses session key)
+// src/api.js — Insurance Portal API service layer (JWT auth)
 
 export const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.arogyasync.com/csv';
 
-/** Returns the API key from sessionStorage (set at login). */
-function getApiKey() {
-  return sessionStorage.getItem('ip_api_key') || '';
+/** Returns the JWT access token from sessionStorage. */
+function getAccessToken() {
+  try {
+    const session = JSON.parse(sessionStorage.getItem('ip_session') || '{}');
+    return session.access_token || '';
+  } catch {
+    return '';
+  }
 }
 
-const headers = () => ({
-  'Content-Type': 'application/json',
-  'X-API-Key': getApiKey(),
-});
+const headers = () => {
+  const h = { 'Content-Type': 'application/json' };
+  const token = getAccessToken();
+  if (token) {
+    h['Authorization'] = `Bearer ${token}`;
+  }
+  return h;
+};
 
 async function request(path, options = {}) {
   const { signal: externalSignal, ...rest } = options;
@@ -55,6 +64,62 @@ async function request(path, options = {}) {
     throw err;
   }
 }
+
+// ── Auth Endpoints (no Bearer token needed) ──
+
+/** Register a new insurance agent */
+export async function registerAgent({ name, email, employee_id, insurance_company, password }) {
+  const res = await fetch(`${API_URL}/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email, employee_id, insurance_company, password }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.error || 'Registration failed');
+  return data;
+}
+
+/** Verify agent email via token */
+export async function verifyAgentEmail(token) {
+  const res = await fetch(`${API_URL}/auth/verify?token=${encodeURIComponent(token)}`);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.error || 'Verification failed');
+  return data;
+}
+
+/** Login and get JWT tokens */
+export async function loginAgent(email, password) {
+  const res = await fetch(`${API_URL}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.error || 'Login failed');
+  return data;
+}
+
+/** Refresh access token */
+export async function refreshToken(refresh_token) {
+  const res = await fetch(`${API_URL}/auth/refresh`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refresh_token }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.error || 'Token refresh failed');
+  return data;
+}
+
+/** Get list of insurance companies */
+export async function getInsuranceCompanies() {
+  const res = await fetch(`${API_URL}/auth/insurance-companies`);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.error || 'Failed to load companies');
+  return data;
+}
+
+// ── Protected Endpoints (use Bearer token via request()) ──
 
 /** Fetch registered patients (supports pagination) */
 export async function getAllPatients({ page, limit, search } = {}) {

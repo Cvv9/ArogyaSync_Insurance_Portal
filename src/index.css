@@ -53,6 +53,17 @@
   100% { background-position: 200% 0; }
 }
 
+@keyframes ecg-draw {
+  0% { stroke-dashoffset: 2000; }
+  100% { stroke-dashoffset: 0; }
+}
+
+.animate-ecg-draw {
+  stroke-dasharray: 2000;
+  stroke-dashoffset: 2000;
+  animation: ecg-draw 4s linear infinite;
+}
+
 /* Base styles — ensures dark background even before React hydrates */
 html, body, #root {
   min-height: 100vh;

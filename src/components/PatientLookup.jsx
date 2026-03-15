@@ -1,12 +1,14 @@
 // src/components/PatientLookup.jsx — Patient lookup form (landing page)
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Search, ShieldCheck, IdCard, CalendarDays, Loader2 } from 'lucide-react';
+import { Search, ShieldCheck, IdCard, CalendarDays, Loader2, Building2 } from 'lucide-react';
 import { getPatientTest } from '../api';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function PatientLookup() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { agent } = useAuth();
   const prefill = location.state?.prefill || {};
 
   const [formData, setFormData] = useState({
@@ -78,8 +80,14 @@ export default function PatientLookup() {
       <div className="mb-6">
         <h1 className="text-xl font-semibold text-text-white">Patient Lookup</h1>
         <p className="text-sm text-text-muted mt-1">
-          Search for a patient by name, date of birth, or insurance ID.
+          Search for a patient by name, date of birth, or policy number.
         </p>
+        {agent?.insurance_company && (
+          <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 bg-accent-cyan/10 border border-accent-cyan/20 rounded-full text-xs text-accent-cyan font-medium">
+            <Building2 className="w-3 h-3" />
+            {agent.insurance_company}
+          </div>
+        )}
       </div>
 
       {/* Form card */}
@@ -118,9 +126,9 @@ export default function PatientLookup() {
             />
           </div>
 
-          {/* Insurance ID */}
+          {/* Policy Number */}
           <div>
-            <label htmlFor="patient-insurance-id" className="block text-sm font-medium text-text-light mb-1.5">Insurance ID</label>
+            <label htmlFor="patient-insurance-id" className="block text-sm font-medium text-text-light mb-1.5">Policy Number</label>
             <input
               id="patient-insurance-id"
               type="text"
