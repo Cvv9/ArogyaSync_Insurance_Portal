@@ -1,5 +1,5 @@
 // src/components/Dashboard.jsx — Analytics dashboard with patient listing
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Users,
@@ -44,7 +44,8 @@ function StatCard({ icon: Icon, label, value, color = 'accent-cyan' }) {
   );
 }
 
-function PatientDetailModal({ patient, onClose }) {
+// IMP-016: Memoize modal to prevent unnecessary re-mounts and duplicate API fetches
+const PatientDetailModal = memo(function PatientDetailModal({ patient, onClose }) {
   const [tests, setTests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -272,7 +273,7 @@ function PatientDetailModal({ patient, onClose }) {
       </div>
     </div>
   );
-}
+}); // IMP-016: End memo wrapper
 
 export default function Dashboard() {
   const [patients, setPatients] = useState([]);
@@ -281,6 +282,11 @@ export default function Dashboard() {
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [selectedPatient, setSelectedPatient] = useState(null);
+
+  // IMP-016: Memoize onClose to prevent modal re-mount on parent re-render
+  const handleCloseModal = useCallback(() => {
+    setSelectedPatient(null);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -451,7 +457,7 @@ export default function Dashboard() {
       {selectedPatient && (
         <PatientDetailModal
           patient={selectedPatient}
-          onClose={() => setSelectedPatient(null)}
+          onClose={handleCloseModal}
         />
       )}
     </div>
