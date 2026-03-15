@@ -22,11 +22,11 @@ const headers = () => {
 };
 
 async function request(path, options = {}) {
-  const { signal: externalSignal, ...rest } = options;
+  const { signal: externalSignal, timeout = 15000, ...rest } = options;
 
   // Create a timeout abort if no external signal provided
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15000);
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
 
   // If external signal provided, link it to our controller
   if (externalSignal) {
@@ -157,6 +157,7 @@ export async function comprehensivePatientScan({ name, dob, insuranceId, dateFro
     method: 'POST',
     body: JSON.stringify({ name, dob, insuranceId, dateFrom, dateTo }),
     signal,
+    timeout: 60000, // 60 second timeout for comprehensive scan (can process many records)
   });
 }
 
