@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard,
   Search,
   LogOut,
   Menu,
@@ -11,7 +10,6 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 
 const NAV_ITEMS = [
-  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/', label: 'Patient Lookup', icon: Search },
 ];
 

@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Search, ShieldCheck, IdCard, CalendarDays, Loader2, Building2 } from 'lucide-react';
-import { getPatientTest } from '../api';
+import { comprehensivePatientScan } from '../api';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function PatientLookup() {
@@ -56,13 +56,14 @@ export default function PatientLookup() {
     setLoading(true);
 
     try {
-      const data = await getPatientTest(formData, { signal: controller.signal });
-      navigate('/results', {
+      // Run comprehensive scan - compares ALL vitals against ALL CSV files
+      const scanResults = await comprehensivePatientScan(formData, { signal: controller.signal });
+
+      // Navigate to scan results page with comprehensive data
+      navigate('/scan-results', {
         state: {
-          records: data.records || data,
-          patientId: data.patientId,
-          patientName: formData.name,
-          patientDob: formData.dob,
+          scanResults,
+          searchParams: formData,
         },
       });
     } catch (err) {
@@ -161,15 +162,21 @@ export default function PatientLookup() {
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Searching...
+                Running comprehensive scan...
               </>
             ) : (
               <>
                 <Search className="w-4 h-4" />
-                Search Records
+                Run Verification Scan
               </>
             )}
           </button>
+
+          {loading && (
+            <p className="text-xs text-text-muted text-center -mt-2">
+              Comparing all vitals against evidence files. This may take 10-30 seconds.
+            </p>
+          )}
         </form>
 
         {/* Feature badges */}

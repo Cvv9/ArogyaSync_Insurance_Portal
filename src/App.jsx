@@ -6,8 +6,8 @@ import LoginPage from './components/LoginPage';
 import RegisterPage from './components/RegisterPage';
 import VerifyEmail from './components/VerifyEmail';
 import PatientLookup from './components/PatientLookup';
+import ScanResults from './components/ScanResults';
 import FraudResults from './components/FraudResults';
-import Dashboard from './components/Dashboard';
 import ErrorBoundary from './components/ErrorBoundary';
 
 function ProtectedRoute({ children }) {
@@ -33,8 +33,11 @@ export default function App() {
             <Route path="/verify" element={<VerifyEmail />} />
             <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
               <Route path="/" element={<PatientLookup />} />
+              <Route path="/patient-lookup" element={<PatientLookup />} />
+              <Route path="/scan-results" element={<ScanResults />} />
               <Route path="/results" element={<FraudResults />} />
-              <Route path="/dashboard" element={<Dashboard />} />
+              {/* Redirect old dashboard to patient lookup */}
+              <Route path="/dashboard" element={<Navigate to="/" replace />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
