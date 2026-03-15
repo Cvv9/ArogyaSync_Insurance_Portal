@@ -1,4 +1,4 @@
-﻿name: Build & Deploy Insurance Portal
+name: Build & Deploy Insurance Portal
 
 on:
   push:
@@ -20,7 +20,7 @@ jobs:
         env:
           VITE_API_BASE_URL: https://api.arogyasync.com/csv
           VITE_API_KEY: f60f1a928fdb147ead54e07105891acc26b74214eff62000519efb5581000c0a
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         with:
           name: portal-dist
