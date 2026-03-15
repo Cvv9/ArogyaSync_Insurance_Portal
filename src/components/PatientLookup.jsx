@@ -1,5 +1,5 @@
 // src/components/PatientLookup.jsx — Patient lookup form (landing page)
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Search, ShieldCheck, IdCard, CalendarDays, Loader2 } from 'lucide-react';
 import { getPatientTest } from '../api';
@@ -16,6 +16,15 @@ export default function PatientLookup() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const abortControllerRef = useRef(null);
+  const isSubmittingRef = useRef(false);
+
+  // Cancel in-flight request on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) abortControllerRef.current.abort();
+    };
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -25,6 +34,10 @@ export default function PatientLookup() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Prevent duplicate submissions
+    if (isSubmittingRef.current) return;
+
     setError('');
 
     // UX-010: At least one field required (relaxed from all 3)
@@ -33,9 +46,15 @@ export default function PatientLookup() {
       return;
     }
 
+    // Cancel any in-flight request
+    if (abortControllerRef.current) abortControllerRef.current.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    isSubmittingRef.current = true;
     setLoading(true);
+
     try {
-      const data = await getPatientTest(formData);
+      const data = await getPatientTest(formData, { signal: controller.signal });
       navigate('/results', {
         state: {
           records: data.records || data,
@@ -45,8 +64,10 @@ export default function PatientLookup() {
         },
       });
     } catch (err) {
+      if (err.name === 'AbortError') return; // Silently ignore cancelled requests
       setError(err.message || 'An unexpected error occurred. Please try again.');
     } finally {
+      isSubmittingRef.current = false;
       setLoading(false);
     }
   };

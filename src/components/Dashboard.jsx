@@ -14,6 +14,7 @@ import {
   BarChart3,
   ShieldCheck,
   ShieldAlert,
+  ChevronLeft,
   ChevronRight,
   X,
   CheckCircle2,
@@ -282,6 +283,10 @@ export default function Dashboard() {
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [selectedPatient, setSelectedPatient] = useState(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalPatients, setTotalPatients] = useState(0);
+  const PAGE_LIMIT = 20;
 
   // IMP-016: Memoize onClose to prevent modal re-mount on parent re-render
   const handleCloseModal = useCallback(() => {
@@ -290,14 +295,22 @@ export default function Dashboard() {
 
   useEffect(() => {
     let cancelled = false;
+    setLoading(true);
     (async () => {
       try {
         const [patientData, summaryData] = await Promise.all([
-          getAllPatients(),
+          getAllPatients({ page, limit: PAGE_LIMIT, search: search || undefined }),
           getStatsSummary().catch(() => null),
         ]);
         if (!cancelled) {
-          setPatients(Array.isArray(patientData) ? patientData : []);
+          // Handle paginated response { data, pagination } or flat array (backward compat)
+          if (patientData?.data && patientData?.pagination) {
+            setPatients(patientData.data);
+            setTotalPages(patientData.pagination.total_pages || 1);
+            setTotalPatients(patientData.pagination.total || 0);
+          } else {
+            setPatients(Array.isArray(patientData) ? patientData : []);
+          }
           setStats(summaryData);
         }
       } catch (err) {
@@ -307,16 +320,7 @@ export default function Dashboard() {
       }
     })();
     return () => { cancelled = true; };
-  }, []);
-
-  const filtered = patients.filter((p) => {
-    const q = search.toLowerCase();
-    return (
-      (p.name || '').toLowerCase().includes(q) ||
-      (p.insurance_id || '').toLowerCase().includes(q) ||
-      (p.id || '').toLowerCase().includes(q)
-    );
-  });
+  }, [page, search]);
 
   if (loading) {
     const shimmer = 'animate-shimmer bg-gradient-to-r from-surface-card via-surface-card-hover to-surface-card bg-[length:200%_100%]';
@@ -382,7 +386,7 @@ export default function Dashboard() {
           <input
             type="search"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             placeholder="Search by name or ID..."
             aria-label="Search patients by name or insurance ID"
             className="w-full pl-9 pr-3 py-2 bg-surface-card border border-border-glass rounded-lg
@@ -402,7 +406,7 @@ export default function Dashboard() {
       </section>
 
       {/* Patient grid */}
-      {filtered.length === 0 ? (
+      {patients.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center" role="status">
           <Users className="w-10 h-10 text-text-muted mb-3" aria-hidden="true" />
           <p className="text-sm text-text-muted">
@@ -410,47 +414,103 @@ export default function Dashboard() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" role="list">
-          {filtered.map((patient) => (
-            <button
-              key={patient.id}
-              type="button"
-              onClick={() => setSelectedPatient(patient)}
-              aria-label={`View details for ${patient.name || 'unnamed patient'}, insurance ID ${patient.insurance_id || 'not available'}`}
-              className="bg-surface-card border border-border-glass rounded-xl p-4 cursor-pointer
-                hover:border-accent-cyan/30 hover:shadow-card-hover transition-all duration-200 group text-left w-full"
-              role="listitem"
-            >
-              <div className="flex items-start justify-between mb-3">
-                <h3 className="text-sm font-semibold text-text-white group-hover:text-accent-cyan transition-colors truncate flex-1">
-                  {patient.name || 'Unnamed Patient'}
-                </h3>
-                <ChevronRight className="w-4 h-4 text-text-muted group-hover:text-accent-cyan transition-colors flex-shrink-0 ml-2" aria-hidden="true" />
-              </div>
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" role="list">
+            {patients.map((patient) => (
+              <button
+                key={patient.id}
+                type="button"
+                onClick={() => setSelectedPatient(patient)}
+                aria-label={`View details for ${patient.name || 'unnamed patient'}, insurance ID ${patient.insurance_id || 'not available'}`}
+                className="bg-surface-card border border-border-glass rounded-xl p-4 cursor-pointer
+                  hover:border-accent-cyan/30 hover:shadow-card-hover transition-all duration-200 group text-left w-full"
+                role="listitem"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-text-white group-hover:text-accent-cyan transition-colors truncate flex-1">
+                    {patient.name || 'Unnamed Patient'}
+                  </h3>
+                  <ChevronRight className="w-4 h-4 text-text-muted group-hover:text-accent-cyan transition-colors flex-shrink-0 ml-2" aria-hidden="true" />
+                </div>
 
-              <div className="space-y-1.5 text-xs text-text-muted">
-                <div className="flex items-center gap-2">
-                  <IdCard className="w-3.5 h-3.5 text-accent-cyan/60" aria-hidden="true" />
-                  <span>{patient.insurance_id || 'N/A'}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-3.5 h-3.5 text-accent-cyan/60" aria-hidden="true" />
-                  <span>{patient.dob ? new Date(patient.dob).toLocaleDateString('en-IN') : 'N/A'}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Hospital className="w-3.5 h-3.5 text-accent-cyan/60" aria-hidden="true" />
-                  <span>{patient.hospital_name || `Hospital #${patient.hospital_id}`}</span>
-                </div>
-                {patient.location && (
+                <div className="space-y-1.5 text-xs text-text-muted">
                   <div className="flex items-center gap-2">
-                    <MapPin className="w-3.5 h-3.5 text-accent-cyan/60" aria-hidden="true" />
-                    <span>{patient.location}</span>
+                    <IdCard className="w-3.5 h-3.5 text-accent-cyan/60" aria-hidden="true" />
+                    <span>{patient.insurance_id || 'N/A'}</span>
                   </div>
-                )}
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-3.5 h-3.5 text-accent-cyan/60" aria-hidden="true" />
+                    <span>{patient.dob ? new Date(patient.dob).toLocaleDateString('en-IN') : 'N/A'}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Hospital className="w-3.5 h-3.5 text-accent-cyan/60" aria-hidden="true" />
+                    <span>{patient.hospital_name || `Hospital #${patient.hospital_id}`}</span>
+                  </div>
+                  {patient.location && (
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-3.5 h-3.5 text-accent-cyan/60" aria-hidden="true" />
+                      <span>{patient.location}</span>
+                    </div>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+
+          {/* Pagination controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-6 pt-4 border-t border-border-glass">
+              <p className="text-xs text-text-muted">
+                Page {page} of {totalPages} ({totalPatients} patients)
+              </p>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                  className="p-1.5 rounded-lg text-text-muted hover:text-text-white hover:bg-surface-card-hover
+                    disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  aria-label="Previous page"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (page <= 3) {
+                    pageNum = i + 1;
+                  } else if (page >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = page - 2 + i;
+                  }
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setPage(pageNum)}
+                      className={`w-8 h-8 rounded-lg text-xs font-medium transition-colors ${
+                        pageNum === page
+                          ? 'bg-accent-cyan text-white'
+                          : 'text-text-muted hover:text-text-white hover:bg-surface-card-hover'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages}
+                  className="p-1.5 rounded-lg text-text-muted hover:text-text-white hover:bg-surface-card-hover
+                    disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  aria-label="Next page"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
               </div>
-            </button>
-          ))}
-        </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Patient detail modal */}

@@ -13,11 +13,24 @@ const headers = () => ({
 });
 
 async function request(path, options = {}) {
+  const { signal: externalSignal, ...rest } = options;
+
+  // Create a timeout abort if no external signal provided
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+  // If external signal provided, link it to our controller
+  if (externalSignal) {
+    externalSignal.addEventListener('abort', () => controller.abort());
+  }
+
   try {
     const res = await fetch(`${API_URL}${path}`, {
       headers: headers(),
-      ...options,
+      signal: controller.signal,
+      ...rest,
     });
+    clearTimeout(timeoutId);
 
     // Check if response is JSON
     const contentType = res.headers.get('content-type');
@@ -31,6 +44,11 @@ async function request(path, options = {}) {
     }
     return data;
   } catch (err) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      if (externalSignal?.aborted) throw err; // User-initiated cancellation
+      throw new Error('Request timed out. Please try again.');
+    }
     if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
       throw new Error(`Cannot connect to API server at ${API_URL}. Is it running?`);
     }
@@ -38,16 +56,22 @@ async function request(path, options = {}) {
   }
 }
 
-/** Fetch all registered patients */
-export async function getAllPatients() {
-  return request('/getAllpatients');
+/** Fetch registered patients (supports pagination) */
+export async function getAllPatients({ page, limit, search } = {}) {
+  const params = new URLSearchParams();
+  if (page) params.set('page', page);
+  if (limit) params.set('limit', limit);
+  if (search) params.set('search', search);
+  const qs = params.toString();
+  return request(`/getAllpatients${qs ? '?' + qs : ''}`);
 }
 
 /** Fetch fraud scan results for a specific patient */
-export async function getPatientTest({ name, dob, insuranceId }) {
+export async function getPatientTest({ name, dob, insuranceId }, { signal } = {}) {
   return request('/getPatientTest', {
     method: 'POST',
     body: JSON.stringify({ name, dob, insuranceId }),
+    signal,
   });
 }
 
