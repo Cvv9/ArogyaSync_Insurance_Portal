@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 
 vi.mock('../components/PatientLookup', () => ({
@@ -14,6 +14,15 @@ vi.mock('../components/Dashboard', () => ({
 import App from '../App';
 
 describe('App routing', () => {
+  beforeEach(() => {
+    // Seed a session key so ProtectedRoute lets us through
+    sessionStorage.setItem('ip_api_key', 'test-key');
+  });
+
+  afterEach(() => {
+    sessionStorage.clear();
+  });
+
   it('renders PatientLookup at /', () => {
     window.location.hash = '#/';
     render(<App />);
@@ -30,5 +39,13 @@ describe('App routing', () => {
     window.location.hash = '#/dashboard';
     render(<App />);
     expect(screen.getByTestId('dashboard')).toBeInTheDocument();
+  });
+
+  it('redirects to login when not authenticated', () => {
+    sessionStorage.clear();
+    window.location.hash = '#/';
+    render(<App />);
+    // Should not see patient-lookup when unauthenticated
+    expect(screen.queryByTestId('patient-lookup')).not.toBeInTheDocument();
   });
 });

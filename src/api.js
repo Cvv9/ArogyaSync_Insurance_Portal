@@ -1,11 +1,15 @@
-// src/api.js — Insurance Portal API service layer
+// src/api.js — Insurance Portal API service layer (UX-009: uses session key)
 
 export const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.arogyasync.com/csv';
-export const API_KEY = import.meta.env.VITE_API_KEY || '';
+
+/** Returns the API key from sessionStorage (set at login). */
+function getApiKey() {
+  return sessionStorage.getItem('ip_api_key') || '';
+}
 
 const headers = () => ({
   'Content-Type': 'application/json',
-  'X-API-Key': API_KEY,
+  'X-API-Key': getApiKey(),
 });
 
 async function request(path, options = {}) {

@@ -1,13 +1,14 @@
 // src/components/Layout.jsx — Shared app shell with sidebar + header
 import { useState } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Search,
-  FileText,
+  LogOut,
   Menu,
   X,
 } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -16,6 +17,13 @@ const NAV_ITEMS = [
 
 export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
     <div className="flex min-h-screen bg-surface-darker text-text-light font-sans">
@@ -90,6 +98,15 @@ export default function Layout() {
             <Menu className="w-5 h-5" />
           </button>
           <div className="flex-1" />
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-text-muted
+              hover:text-accent-red hover:bg-accent-red/10 transition-colors"
+            title="Sign out"
+          >
+            <LogOut className="w-4 h-4" />
+            <span className="hidden sm:inline">Sign Out</span>
+          </button>
         </header>
 
         {/* Page content */}

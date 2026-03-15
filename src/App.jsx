@@ -1,23 +1,41 @@
-// src/App.jsx — Root with route structure + error boundary
-import { HashRouter, Routes, Route } from 'react-router-dom';
+// src/App.jsx — Root with auth-protected routes (UX-009)
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Layout from './components/Layout';
+import LoginPage from './components/LoginPage';
 import PatientLookup from './components/PatientLookup';
 import FraudResults from './components/FraudResults';
 import Dashboard from './components/Dashboard';
 import ErrorBoundary from './components/ErrorBoundary';
 
+function ProtectedRoute({ children }) {
+  const { isAuthenticated } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  return children;
+}
+
+function PublicOnlyRoute({ children }) {
+  const { isAuthenticated } = useAuth();
+  if (isAuthenticated) return <Navigate to="/" replace />;
+  return children;
+}
+
 export default function App() {
   return (
     <ErrorBoundary>
-      <HashRouter>
-        <Routes>
-          <Route element={<Layout />}>
-            <Route path="/" element={<PatientLookup />} />
-            <Route path="/results" element={<FraudResults />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-          </Route>
-        </Routes>
-      </HashRouter>
+      <AuthProvider>
+        <HashRouter>
+          <Routes>
+            <Route path="/login" element={<PublicOnlyRoute><LoginPage /></PublicOnlyRoute>} />
+            <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+              <Route path="/" element={<PatientLookup />} />
+              <Route path="/results" element={<FraudResults />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+            </Route>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </HashRouter>
+      </AuthProvider>
     </ErrorBoundary>
   );
 }
