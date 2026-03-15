@@ -266,14 +266,14 @@ function VitalExplorer({ patientId }) {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border-glass bg-surface-dark/50">
-                    <th className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Recorded At</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Device</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">HR</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">SpO2</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">BP</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Temp</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">RR</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Action</th>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Recorded At</th>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Device</th>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">HR</th>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">SpO2</th>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">BP</th>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Temp</th>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">RR</th>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border-subtle">
@@ -488,14 +488,14 @@ export default function FraudResults() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border-glass bg-surface-dark/50">
-                <th className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">#</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Device ID</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Checked At</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Recorded</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Vitals</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Mismatches</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Action</th>
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">#</th>
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Device ID</th>
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Status</th>
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Checked At</th>
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Recorded</th>
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Vitals</th>
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Mismatches</th>
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border-subtle">
