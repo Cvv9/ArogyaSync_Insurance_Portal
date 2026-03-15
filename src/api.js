@@ -140,6 +140,26 @@ export async function getPatientTest({ name, dob, insuranceId }, { signal } = {}
   });
 }
 
+/**
+ * Comprehensive on-demand patient scan - compares ALL vitals against ALL CSV files
+ * @param {Object} params - Patient search parameters
+ * @param {string} params.name - Patient name
+ * @param {string} params.dob - Date of birth (DD/MM/YYYY)
+ * @param {string} params.insuranceId - Insurance policy number
+ * @param {string} [params.dateFrom] - Optional start date for filtering (YYYY-MM-DD)
+ * @param {string} [params.dateTo] - Optional end date for filtering (YYYY-MM-DD)
+ * @param {Object} options - Request options
+ * @param {AbortSignal} [options.signal] - Abort signal for cancellation
+ * @returns {Promise<Object>} Scan results with metrics and detailed comparison
+ */
+export async function comprehensivePatientScan({ name, dob, insuranceId, dateFrom, dateTo }, { signal } = {}) {
+  return request('/patient/comprehensive-scan', {
+    method: 'POST',
+    body: JSON.stringify({ name, dob, insuranceId, dateFrom, dateTo }),
+    signal,
+  });
+}
+
 /** Fetch all test results for a patient by ID */
 export async function getAllTests(patientId) {
   return request(`/getAlltest/${patientId}`);
