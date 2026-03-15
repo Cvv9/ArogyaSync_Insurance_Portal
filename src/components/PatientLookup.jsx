@@ -26,6 +26,13 @@ export default function PatientLookup() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    // UX-010: At least one field required (relaxed from all 3)
+    if (!formData.name.trim() && !formData.dob && !formData.insuranceId.trim()) {
+      setError('Please fill in at least one field to search.');
+      return;
+    }
+
     setLoading(true);
     try {
       const data = await getPatientTest(formData);
@@ -50,7 +57,7 @@ export default function PatientLookup() {
       <div className="mb-6">
         <h1 className="text-xl font-semibold text-text-white">Patient Lookup</h1>
         <p className="text-sm text-text-muted mt-1">
-          Verify a patient&apos;s insurance records by submitting their details below.
+          Search for a patient by name, date of birth, or insurance ID.
         </p>
       </div>
 
@@ -66,7 +73,6 @@ export default function PatientLookup() {
               name="name"
               value={formData.name}
               onChange={handleChange}
-              required
               placeholder="John Doe"
               className="w-full px-3.5 py-2.5 bg-surface-darker border border-border-glass rounded-lg
                 text-text-white placeholder:text-text-muted text-sm
@@ -84,7 +90,6 @@ export default function PatientLookup() {
               name="dob"
               value={formData.dob}
               onChange={handleChange}
-              required
               className="w-full px-3.5 py-2.5 bg-surface-darker border border-border-glass rounded-lg
                 text-text-white text-sm
                 focus:outline-none focus:ring-2 focus:ring-accent-cyan/40 focus:border-accent-cyan/60
@@ -101,7 +106,6 @@ export default function PatientLookup() {
               name="insuranceId"
               value={formData.insuranceId}
               onChange={handleChange}
-              required
               placeholder="INS123456"
               className="w-full px-3.5 py-2.5 bg-surface-darker border border-border-glass rounded-lg
                 text-text-white placeholder:text-text-muted text-sm
