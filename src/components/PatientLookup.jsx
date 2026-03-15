@@ -174,7 +174,7 @@ export default function PatientLookup() {
 
           {loading && (
             <p className="text-xs text-text-muted text-center -mt-2">
-              Comparing all vitals against evidence files. This may take 10-30 seconds.
+              Comparing all vitals against evidence files. This may take 30-120 seconds for large datasets.
             </p>
           )}
         </form>

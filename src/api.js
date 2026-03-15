@@ -157,7 +157,7 @@ export async function comprehensivePatientScan({ name, dob, insuranceId, dateFro
     method: 'POST',
     body: JSON.stringify({ name, dob, insuranceId, dateFrom, dateTo }),
     signal,
-    timeout: 60000, // 60 second timeout for comprehensive scan (can process many records)
+    timeout: 120000, // 120 second timeout for comprehensive scan (can process many records)
   });
 }
 
