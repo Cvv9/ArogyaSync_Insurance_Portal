@@ -1,5 +1,5 @@
 // src/components/ScanResults.jsx — Comprehensive scan results with metrics and detailed comparison
-import { useState, useMemo } from 'react';
+import { useState, useMemo, Fragment } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -78,7 +78,8 @@ export default function ScanResults() {
       mismatches: filteredDetails.filter((r) => r.status === 'mismatch').length,
       csvMissing: filteredDetails.filter((r) => r.status === 'csv_missing').length,
     };
-    filtered.matchRate = filtered.total > 0 ? ((filtered.matches / filtered.total) * 100).toFixed(2) : 0;
+    const verifiedFiltered = filtered.matches + filtered.mismatches;
+    filtered.matchRate = verifiedFiltered > 0 ? ((filtered.matches / verifiedFiltered) * 100).toFixed(2) : 0;
     return filtered;
   }, [filteredDetails]);
 
@@ -311,31 +312,73 @@ export default function ScanResults() {
                 </tr>
               ) : (
                 paginatedDetails.map((record, index) => (
-                  <tr
-                    key={index}
-                    className={`hover:bg-surface-darker/50 transition-colors cursor-pointer ${
-                      record.status === 'mismatch' ? 'bg-accent-red-light/5' : ''
-                    }`}
-                    onClick={() => toggleRow(index)}
-                  >
-                    <td className="px-4 py-3">
-                      <div className="flex flex-col">
-                        <span className="text-sm text-text-white">{formatTimestamp(record.recordTime)}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-text-light">{record.sensorId}</td>
-                    <td className="px-4 py-3">{getStatusBadge(record.status)}</td>
-                    <td className="px-4 py-3 text-xs text-text-muted font-mono">
-                      {record.csvFile || '-'}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      {record.comparison && (
-                        <button className="text-accent-cyan hover:text-accent-cyan/80 text-xs">
-                          {expandedRows.has(index) ? 'Hide' : 'View'} Details
-                        </button>
-                      )}
-                    </td>
-                  </tr>
+                  <Fragment key={index}>
+                    <tr
+                      className={`hover:bg-surface-darker/50 transition-colors cursor-pointer ${
+                        record.status === 'mismatch' ? 'bg-accent-red-light/5' : ''
+                      }`}
+                      onClick={() => toggleRow(index)}
+                    >
+                      <td className="px-4 py-3">
+                        <div className="flex flex-col">
+                          <span className="text-sm text-text-white">{formatTimestamp(record.recordTime)}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-text-light">{record.sensorId}</td>
+                      <td className="px-4 py-3">{getStatusBadge(record.status)}</td>
+                      <td className="px-4 py-3 text-xs text-text-muted font-mono">
+                        {record.csvFile || '-'}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        {record.comparison && (
+                          <button className="text-accent-cyan hover:text-accent-cyan/80 text-xs">
+                            {expandedRows.has(index) ? 'Hide' : 'View'} Details
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                    {expandedRows.has(index) && record.comparison && (
+                      <tr className="bg-surface-darker/30">
+                        <td colSpan="5" className="px-4 py-4 border-t border-border-glass">
+                          <h3 className="text-xs font-semibold text-text-white mb-3 uppercase">
+                            Field-by-Field Comparison
+                          </h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {Object.entries(record.comparison).map(([field, data]) => {
+                              const isMatch = data.match === true;
+                              const isMismatch = data.match === false;
+                              return (
+                                <div
+                                  key={field}
+                                  className={`p-3 rounded-lg border ${
+                                    isMismatch
+                                      ? 'bg-accent-red-light/10 border-accent-red/30'
+                                      : 'bg-surface-card border-border-glass'
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between mb-2">
+                                    <span className="text-xs font-medium text-text-light uppercase">{field}</span>
+                                    {isMatch && <CheckCircle2 className="w-3 h-3 text-green-400" />}
+                                    {isMismatch && <XCircle className="w-3 h-3 text-accent-red" />}
+                                  </div>
+                                  <div className="space-y-1.5">
+                                    <div className="flex justify-between text-xs">
+                                      <span className="text-text-muted">CSV:</span>
+                                      <span className="text-text-white font-mono">{data.csv || '-'}</span>
+                                    </div>
+                                    <div className="flex justify-between text-xs">
+                                      <span className="text-text-muted">DB:</span>
+                                      <span className="text-text-white font-mono">{data.db || '-'}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
                 ))
               )}
             </tbody>
@@ -368,51 +411,6 @@ export default function ScanResults() {
           </div>
         )}
 
-        {/* Expanded Row Details */}
-        {paginatedDetails.map((record, index) => {
-          if (!expandedRows.has(index) || !record.comparison) return null;
-
-          return (
-            <div key={`expanded-${index}`} className="border-t border-border-glass bg-surface-darker/30 px-4 py-4">
-              <h3 className="text-xs font-semibold text-text-white mb-3 uppercase">
-                Field-by-Field Comparison
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {Object.entries(record.comparison).map(([field, data]) => {
-                  const isMatch = data.match === true;
-                  const isMismatch = data.match === false;
-
-                  return (
-                    <div
-                      key={field}
-                      className={`p-3 rounded-lg border ${
-                        isMismatch
-                          ? 'bg-accent-red-light/10 border-accent-red/30'
-                          : 'bg-surface-card border-border-glass'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-medium text-text-light uppercase">{field}</span>
-                        {isMatch && <CheckCircle2 className="w-3 h-3 text-green-400" />}
-                        {isMismatch && <XCircle className="w-3 h-3 text-accent-red" />}
-                      </div>
-                      <div className="space-y-1.5">
-                        <div className="flex justify-between text-xs">
-                          <span className="text-text-muted">CSV:</span>
-                          <span className="text-text-white font-mono">{data.csv || '-'}</span>
-                        </div>
-                        <div className="flex justify-between text-xs">
-                          <span className="text-text-muted">DB:</span>
-                          <span className="text-text-white font-mono">{data.db || '-'}</span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
       </div>
     </div>
   );
