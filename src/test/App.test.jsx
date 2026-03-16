@@ -15,8 +15,12 @@ import App from '../App';
 
 describe('App routing', () => {
   beforeEach(() => {
-    // Seed a session key so ProtectedRoute lets us through
-    sessionStorage.setItem('ip_api_key', 'test-key');
+    // FE-001: Seed a valid JWT session so ProtectedRoute (useAuth) lets us through
+    sessionStorage.setItem('ip_session', JSON.stringify({
+      access_token: 'test-jwt-token',
+      refresh_token: 'test-refresh-token',
+      agent: { name: 'Test Agent', email: 'test@example.com', insurance_company: 'Test Insurance' },
+    }));
   });
 
   afterEach(() => {
