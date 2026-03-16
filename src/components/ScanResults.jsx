@@ -1,6 +1,7 @@
 // src/components/ScanResults.jsx — Comprehensive scan results with metrics and detailed comparison
-import { useState, useMemo, Fragment } from 'react';
+import { useState, useMemo, useCallback, Fragment } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { compareVital } from '../api';
 import {
   ArrowLeft,
   CheckCircle2,
@@ -75,6 +76,8 @@ export default function ScanResults() {
   const [showFilters, setShowFilters] = useState(false);
   const [expandedRows, setExpandedRows] = useState(new Set());
   const [currentPage, setCurrentPage] = useState(1);
+  const [fetchedComparisons, setFetchedComparisons] = useState({});
+  const [loadingComparisons, setLoadingComparisons] = useState(new Set());
   const PAGE_SIZE = 50;
 
   // Redirect if no scan results
@@ -162,12 +165,34 @@ export default function ScanResults() {
     return f;
   }, [filteredDetails]);
 
-  const toggleRow = (globalIndex) => {
+  const toggleRow = useCallback(async (globalIndex, record) => {
     const next = new Set(expandedRows);
-    if (next.has(globalIndex)) next.delete(globalIndex);
-    else next.add(globalIndex);
+    if (next.has(globalIndex)) {
+      next.delete(globalIndex);
+      setExpandedRows(next);
+      return;
+    }
+    next.add(globalIndex);
     setExpandedRows(next);
-  };
+
+    // If comparison data is already inline (mismatches) or previously fetched, nothing to do
+    if (record.comparison || fetchedComparisons[globalIndex]) return;
+    // csv_missing / csv_pending have no comparison data to fetch
+    if (record.status === 'csv_missing' || record.status === 'csv_pending') return;
+
+    // Fetch comparison on-demand for match records
+    setLoadingComparisons(prev => new Set(prev).add(globalIndex));
+    try {
+      const result = await compareVital({ record_time: record.recordTime, sensor_id: record.sensorId });
+      if (result?.comparison) {
+        setFetchedComparisons(prev => ({ ...prev, [globalIndex]: result.comparison }));
+      }
+    } catch {
+      // Silently fail — row will show "Details unavailable"
+    } finally {
+      setLoadingComparisons(prev => { const s = new Set(prev); s.delete(globalIndex); return s; });
+    }
+  }, [expandedRows, fetchedComparisons]);
 
   const getStatusBadge = (status) => {
     if (status === 'match') return (
@@ -422,63 +447,74 @@ export default function ScanResults() {
                   // Use a global index so expansion state persists correctly across pages
                   const globalIndex = (currentPage - 1) * PAGE_SIZE + pageIndex;
                   const isExpanded = expandedRows.has(globalIndex);
+                  const comparisonData = record.comparison || fetchedComparisons[globalIndex];
+                  const isLoading = loadingComparisons.has(globalIndex);
+                  const canExpand = record.status === 'match' || record.status === 'mismatch';
                   return (
                     <Fragment key={globalIndex}>
                       <tr
                         className={`hover:bg-surface-darker/50 transition-colors cursor-pointer ${
                           record.status === 'mismatch' ? 'bg-accent-red-light/5' : ''
                         }`}
-                        onClick={() => toggleRow(globalIndex)}
+                        onClick={() => toggleRow(globalIndex, record)}
                       >
                         <td className="px-4 py-3 text-sm text-text-white">{formatTimestamp(record.recordTime)}</td>
                         <td className="px-4 py-3 text-sm text-text-light">{record.sensorId}</td>
                         <td className="px-4 py-3">{getStatusBadge(record.status)}</td>
                         <td className="px-4 py-3 text-xs text-text-muted font-mono">{record.csvFile || '—'}</td>
                         <td className="px-4 py-3 text-right">
-                          {record.comparison && (
+                          {canExpand && (
                             <span className="text-accent-cyan hover:text-accent-cyan/80 text-xs">
-                              {isExpanded ? 'Hide' : 'View'} Details
+                              {isLoading ? 'Loading...' : isExpanded ? 'Hide' : 'View'} Details
                             </span>
                           )}
                         </td>
                       </tr>
-                      {isExpanded && record.comparison && (
+                      {isExpanded && canExpand && (
                         <tr className="bg-surface-darker/30">
                           <td colSpan="5" className="px-4 py-4 border-t border-border-glass">
-                            <h3 className="text-xs font-semibold text-text-white mb-3 uppercase tracking-wider">
-                              Field-by-Field Comparison
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                              {Object.entries(record.comparison).map(([field, data]) => {
-                                const isMismatch = data.match === false;
-                                return (
-                                  <div
-                                    key={field}
-                                    className={`p-3 rounded-lg border ${
-                                      isMismatch
-                                        ? 'bg-accent-red-light/10 border-accent-red/30'
-                                        : 'bg-surface-card border-border-glass'
-                                    }`}
-                                  >
-                                    <div className="flex items-center justify-between mb-2">
-                                      <span className="text-xs font-medium text-text-light uppercase">{field}</span>
-                                      {data.match === true && <CheckCircle2 className="w-3 h-3 text-green-400" />}
-                                      {isMismatch && <XCircle className="w-3 h-3 text-accent-red" />}
-                                    </div>
-                                    <div className="space-y-1.5">
-                                      <div className="flex justify-between text-xs">
-                                        <span className="text-text-muted">CSV:</span>
-                                        <span className="text-text-white font-mono">{data.csv ?? '—'}</span>
+                            {isLoading ? (
+                              <p className="text-xs text-text-muted text-center py-2">Fetching comparison data...</p>
+                            ) : comparisonData ? (
+                              <>
+                                <h3 className="text-xs font-semibold text-text-white mb-3 uppercase tracking-wider">
+                                  Field-by-Field Comparison
+                                </h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                  {Object.entries(comparisonData).map(([field, data]) => {
+                                    const isMismatch = data.match === false;
+                                    return (
+                                      <div
+                                        key={field}
+                                        className={`p-3 rounded-lg border ${
+                                          isMismatch
+                                            ? 'bg-accent-red-light/10 border-accent-red/30'
+                                            : 'bg-surface-card border-border-glass'
+                                        }`}
+                                      >
+                                        <div className="flex items-center justify-between mb-2">
+                                          <span className="text-xs font-medium text-text-light uppercase">{field}</span>
+                                          {data.match === true && <CheckCircle2 className="w-3 h-3 text-green-400" />}
+                                          {isMismatch && <XCircle className="w-3 h-3 text-accent-red" />}
+                                        </div>
+                                        <div className="space-y-1.5">
+                                          <div className="flex justify-between text-xs">
+                                            <span className="text-text-muted">CSV:</span>
+                                            <span className="text-text-white font-mono">{data.csv ?? '—'}</span>
+                                          </div>
+                                          <div className="flex justify-between text-xs">
+                                            <span className="text-text-muted">DB:</span>
+                                            <span className="text-text-white font-mono">{data.db ?? '—'}</span>
+                                          </div>
+                                        </div>
                                       </div>
-                                      <div className="flex justify-between text-xs">
-                                        <span className="text-text-muted">DB:</span>
-                                        <span className="text-text-white font-mono">{data.db ?? '—'}</span>
-                                      </div>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
+                                    );
+                                  })}
+                                </div>
+                              </>
+                            ) : (
+                              <p className="text-xs text-text-muted text-center py-2">Details unavailable for this record.</p>
+                            )}
                           </td>
                         </tr>
                       )}
