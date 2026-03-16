@@ -44,6 +44,10 @@ async function request(path, options = {}) {
     // Check if response is JSON
     const contentType = res.headers.get('content-type');
     if (!contentType || !contentType.includes('application/json')) {
+      // Rate-limited responses may arrive as HTML before the JSON handler kicks in
+      if (res.status === 429) {
+        throw new Error('Too many requests. Please wait a moment before trying again.');
+      }
       throw new Error(`API returned ${res.status}: Expected JSON but got ${contentType || 'unknown content type'}. Is the API server running at ${API_URL}?`);
     }
 
