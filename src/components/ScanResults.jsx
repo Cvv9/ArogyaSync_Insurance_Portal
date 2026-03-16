@@ -12,7 +12,52 @@ import {
   ChevronDown,
   ChevronUp,
   Filter,
+  ShieldCheck,
+  ShieldAlert,
 } from 'lucide-react';
+
+const FRAUD_LEVEL_CONFIG = {
+  verified_clean: {
+    label: 'Verified Clean',
+    color: 'text-green-400',
+    bg: 'bg-green-500/10',
+    border: 'border-green-500/30',
+    iconBg: 'bg-green-500/20',
+    Icon: ShieldCheck,
+  },
+  low_risk: {
+    label: 'Low Risk',
+    color: 'text-green-400',
+    bg: 'bg-green-500/10',
+    border: 'border-green-500/20',
+    iconBg: 'bg-green-500/20',
+    Icon: ShieldCheck,
+  },
+  medium_risk: {
+    label: 'Medium Risk',
+    color: 'text-yellow-400',
+    bg: 'bg-yellow-500/10',
+    border: 'border-yellow-500/30',
+    iconBg: 'bg-yellow-500/20',
+    Icon: ShieldAlert,
+  },
+  high_risk: {
+    label: 'High Risk',
+    color: 'text-orange-400',
+    bg: 'bg-orange-500/10',
+    border: 'border-orange-500/30',
+    iconBg: 'bg-orange-500/20',
+    Icon: ShieldAlert,
+  },
+  critical_risk: {
+    label: 'Critical Risk',
+    color: 'text-accent-red',
+    bg: 'bg-accent-red/10',
+    border: 'border-accent-red/30',
+    iconBg: 'bg-accent-red/20',
+    Icon: ShieldAlert,
+  },
+};
 
 export default function ScanResults() {
   const location = useLocation();
@@ -44,10 +89,15 @@ export default function ScanResults() {
     mismatches,
     csvMissing = 0,
     matchRate,
+    fraudScore = 0,
+    fraudLevel = 'low_risk',
+    csvCoverage = 0,
     dateRangeStart,
     dateRangeEnd,
     details = [],
   } = scanResults;
+
+  const fraudCfg = FRAUD_LEVEL_CONFIG[fraudLevel] ?? FRAUD_LEVEL_CONFIG.low_risk;
 
   // Filter details by date range
   const filteredDetails = useMemo(() => {
@@ -161,6 +211,26 @@ export default function ScanResults() {
         </div>
       </div>
 
+      {/* Fraud Risk Assessment Banner */}
+      <div className={`rounded-xl border ${fraudCfg.bg} ${fraudCfg.border} p-4 mb-6 flex items-center justify-between gap-4`}>
+        <div className="flex items-center gap-3 min-w-0">
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${fraudCfg.iconBg}`}>
+            <fraudCfg.Icon className={`w-5 h-5 ${fraudCfg.color}`} />
+          </div>
+          <div className="min-w-0">
+            <p className={`text-sm font-semibold ${fraudCfg.color}`}>{fraudCfg.label}</p>
+            <p className="text-xs text-text-muted mt-0.5">
+              {mismatches} mismatch{mismatches !== 1 ? 'es' : ''} in {(matches + mismatches).toLocaleString()} verified records
+              {csvCoverage < 100 && <> · {csvCoverage}% verifiable</>}
+            </p>
+          </div>
+        </div>
+        <div className="text-right flex-shrink-0">
+          <p className={`text-3xl font-bold leading-none ${fraudCfg.color}`}>{fraudScore}%</p>
+          <p className="text-xs text-text-muted mt-1">fraud score</p>
+        </div>
+      </div>
+
       {/* Metrics Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
         {/* Total Scans */}
@@ -206,8 +276,23 @@ export default function ScanResults() {
             <FileCheck className="w-4 h-4 text-accent-cyan" />
           </div>
           <p className="text-2xl font-bold text-text-white">{matchRate}%</p>
+          <p className="text-xs text-text-muted mt-1">of verified records</p>
         </div>
       </div>
+
+      {/* Verification Accounting Breakdown */}
+      {csvMissing > 0 && (
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs mb-6 px-1">
+          <span className="text-green-400 font-medium">{matches.toLocaleString()} verified matches</span>
+          <span className="text-text-muted">+</span>
+          <span className={`font-medium ${mismatches > 0 ? 'text-accent-red' : 'text-text-muted'}`}>{mismatches.toLocaleString()} mismatches</span>
+          <span className="text-text-muted">+</span>
+          <span className="text-yellow-400 font-medium">{csvMissing.toLocaleString()} unverifiable (CSV not in S3)</span>
+          <span className="text-text-muted">=</span>
+          <span className="text-text-white font-medium">{totalScans.toLocaleString()} total scans</span>
+          <span className="text-text-muted/60 ml-1">· Match rate only counts verified records</span>
+        </div>
+      )}
 
       {/* Date Range & Filters */}
       <div className="bg-surface-card border border-border-glass rounded-xl p-4 mb-6">
