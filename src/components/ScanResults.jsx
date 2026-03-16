@@ -22,6 +22,8 @@ export default function ScanResults() {
   const [dateFilter, setDateFilter] = useState({ from: '', to: '' });
   const [showFilters, setShowFilters] = useState(false);
   const [expandedRows, setExpandedRows] = useState(new Set());
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 50;
 
   // Redirect if no scan results
   if (!scanResults) {
@@ -60,6 +62,12 @@ export default function ScanResults() {
       return true;
     });
   }, [details, dateFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredDetails.length / PAGE_SIZE));
+  const paginatedDetails = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filteredDetails.slice(start, start + PAGE_SIZE);
+  }, [filteredDetails, currentPage, PAGE_SIZE]);
 
   // Calculate filtered stats
   const filteredStats = useMemo(() => {
@@ -105,6 +113,14 @@ export default function ScanResults() {
         <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-yellow-500/10 border border-yellow-500/20 rounded text-xs text-yellow-400">
           <AlertTriangle className="w-3 h-3" />
           CSV Missing
+        </span>
+      );
+    }
+    if (status === 'csv_pending') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-500/10 border border-blue-500/20 rounded text-xs text-blue-400">
+          <AlertTriangle className="w-3 h-3" />
+          Pending Upload
         </span>
       );
     }
@@ -222,7 +238,7 @@ export default function ScanResults() {
             </div>
             <div className="flex items-end">
               <button
-                onClick={() => setDateFilter({ from: '', to: '' })}
+                onClick={() => { setDateFilter({ from: '', to: '' }); setCurrentPage(1); }}
                 className="px-4 py-2 bg-surface-darker border border-border-glass rounded-lg text-text-white text-sm hover:bg-surface-card transition-colors"
               >
                 Clear Filter
@@ -281,7 +297,7 @@ export default function ScanResults() {
                   </td>
                 </tr>
               ) : (
-                filteredDetails.map((record, index) => (
+                paginatedDetails.map((record, index) => (
                   <tr
                     key={index}
                     className={`hover:bg-surface-darker/50 transition-colors cursor-pointer ${
@@ -313,8 +329,34 @@ export default function ScanResults() {
           </table>
         </div>
 
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="px-4 py-3 border-t border-border-glass flex items-center justify-between">
+            <span className="text-xs text-text-muted">
+              Showing {((currentPage - 1) * PAGE_SIZE) + 1}–{Math.min(currentPage * PAGE_SIZE, filteredDetails.length)} of {filteredDetails.length} records
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1 text-xs bg-surface-darker border border-border-glass rounded text-text-white disabled:opacity-40 hover:bg-surface-card transition-colors"
+              >
+                Prev
+              </button>
+              <span className="text-xs text-text-muted">{currentPage} / {totalPages}</span>
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 text-xs bg-surface-darker border border-border-glass rounded text-text-white disabled:opacity-40 hover:bg-surface-card transition-colors"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Expanded Row Details */}
-        {filteredDetails.map((record, index) => {
+        {paginatedDetails.map((record, index) => {
           if (!expandedRows.has(index) || !record.comparison) return null;
 
           return (
