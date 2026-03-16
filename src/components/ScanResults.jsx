@@ -42,6 +42,7 @@ export default function ScanResults() {
     totalScans,
     matches,
     mismatches,
+    csvMissing = 0,
     matchRate,
     dateRangeStart,
     dateRangeEnd,
@@ -160,7 +161,7 @@ export default function ScanResults() {
       </div>
 
       {/* Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
         {/* Total Scans */}
         <div className="bg-surface-card border border-border-glass rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
@@ -186,6 +187,15 @@ export default function ScanResults() {
             <XCircle className="w-4 h-4 text-accent-red" />
           </div>
           <p className="text-2xl font-bold text-accent-red">{mismatches.toLocaleString()}</p>
+        </div>
+
+        {/* CSV Missing */}
+        <div className="bg-surface-card border border-border-glass rounded-xl p-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-medium text-text-muted uppercase">CSV Missing</span>
+            <AlertTriangle className="w-4 h-4 text-yellow-400" />
+          </div>
+          <p className="text-2xl font-bold text-yellow-400">{csvMissing.toLocaleString()}</p>
         </div>
 
         {/* Match Rate */}
@@ -251,7 +261,7 @@ export default function ScanResults() {
         {(dateFilter.from || dateFilter.to) && (
           <div className="mt-4 pt-4 border-t border-border-glass">
             <p className="text-xs text-text-muted mb-2">Filtered Results:</p>
-            <div className="flex gap-4 text-sm">
+            <div className="flex flex-wrap gap-4 text-sm">
               <span className="text-text-white">
                 Total: <strong>{filteredStats.total}</strong>
               </span>
@@ -260,6 +270,9 @@ export default function ScanResults() {
               </span>
               <span className="text-accent-red">
                 Mismatches: <strong>{filteredStats.mismatches}</strong>
+              </span>
+              <span className="text-yellow-400">
+                CSV Missing: <strong>{filteredStats.csvMissing}</strong>
               </span>
               <span className="text-text-white">
                 Match Rate: <strong>{filteredStats.matchRate}%</strong>
