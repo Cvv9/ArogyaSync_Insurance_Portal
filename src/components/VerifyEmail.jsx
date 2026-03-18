@@ -10,6 +10,7 @@ export default function VerifyEmail() {
   const [status, setStatus] = useState('loading'); // loading | success | error
   const [message, setMessage] = useState('');
 
+  // CR5-041: AbortController prevents setting state on unmounted component
   useEffect(() => {
     if (!token) {
       setStatus('error');
@@ -17,15 +18,20 @@ export default function VerifyEmail() {
       return;
     }
 
-    verifyAgentEmail(token)
+    const controller = new AbortController();
+
+    verifyAgentEmail(token, { signal: controller.signal })
       .then((data) => {
         setStatus('success');
         setMessage(data.message || 'Email verified successfully!');
       })
       .catch((err) => {
+        if (err.name === 'AbortError') return;
         setStatus('error');
         setMessage(err.message || 'Verification failed.');
       });
+
+    return () => controller.abort();
   }, [token]);
 
   return (

@@ -81,9 +81,9 @@ export async function registerAgent({ name, email, employee_id, insurance_compan
   return data;
 }
 
-/** Verify agent email via token */
-export async function verifyAgentEmail(token) {
-  const res = await fetch(`${API_URL}/auth/verify?token=${encodeURIComponent(token)}`);
+/** Verify agent email via token. Accepts an optional AbortSignal for cleanup. */
+export async function verifyAgentEmail(token, { signal } = {}) {
+  const res = await fetch(`${API_URL}/auth/verify?token=${encodeURIComponent(token)}`, { signal });
   const data = await res.json();
   if (!res.ok) throw new Error(data?.error || 'Verification failed');
   return data;

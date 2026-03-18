@@ -81,10 +81,12 @@ const PatientDetailModal = memo(function PatientDetailModal({ patient, onClose }
   }, [onClose]);
 
   // REM-051: Focus trap
+  // CR5-044: Capture ref value at effect creation time to avoid stale ref in cleanup
   useEffect(() => {
-    if (!modalRef.current) return;
+    const el = modalRef.current;
+    if (!el) return;
 
-    const focusableElements = modalRef.current.querySelectorAll(
+    const focusableElements = el.querySelectorAll(
       'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
     );
     const firstElement = focusableElements[0];
@@ -109,8 +111,8 @@ const PatientDetailModal = memo(function PatientDetailModal({ patient, onClose }
       }
     };
 
-    modalRef.current.addEventListener('keydown', handleTab);
-    return () => modalRef.current?.removeEventListener('keydown', handleTab);
+    el.addEventListener('keydown', handleTab);
+    return () => el.removeEventListener('keydown', handleTab);
   }, [tests, loading, error]); // Re-run when content changes
 
   if (!patient) return null;
