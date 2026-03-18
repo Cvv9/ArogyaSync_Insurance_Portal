@@ -11,20 +11,33 @@ vi.mock('../components/Dashboard', () => ({
   default: () => <div data-testid="dashboard">Dashboard</div>,
 }));
 
+// CR4-001: Mock AuthContext to provide in-memory auth state (no sessionStorage)
+vi.mock('../contexts/AuthContext', () => {
+  let mockAuth = {
+    isAuthenticated: true,
+    agent: { name: 'Test Agent', email: 'test@example.com', insurance_company: 'Test Insurance' },
+    login: vi.fn(),
+    logout: vi.fn(),
+    refresh: vi.fn(),
+    getAccessToken: () => 'test-jwt-token',
+  };
+  return {
+    AuthProvider: ({ children }) => children,
+    useAuth: () => mockAuth,
+    __setMockAuth: (overrides) => { mockAuth = { ...mockAuth, ...overrides }; },
+  };
+});
+
 import App from '../App';
+import { __setMockAuth } from '../contexts/AuthContext';
 
 describe('App routing', () => {
   beforeEach(() => {
-    // FE-001: Seed a valid JWT session so ProtectedRoute (useAuth) lets us through
-    sessionStorage.setItem('ip_session', JSON.stringify({
-      access_token: 'test-jwt-token',
-      refresh_token: 'test-refresh-token',
-      agent: { name: 'Test Agent', email: 'test@example.com', insurance_company: 'Test Insurance' },
-    }));
+    __setMockAuth({ isAuthenticated: true });
   });
 
   afterEach(() => {
-    sessionStorage.clear();
+    __setMockAuth({ isAuthenticated: true });
   });
 
   it('renders PatientLookup at /', () => {
@@ -46,7 +59,7 @@ describe('App routing', () => {
   });
 
   it('redirects to login when not authenticated', () => {
-    sessionStorage.clear();
+    __setMockAuth({ isAuthenticated: false });
     window.location.hash = '#/';
     render(<App />);
     // Should not see patient-lookup when unauthenticated

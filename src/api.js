@@ -2,19 +2,16 @@
 
 export const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.arogyasync.com/csv';
 
-/** Returns the JWT access token from sessionStorage. */
-function getAccessToken() {
-  try {
-    const session = JSON.parse(sessionStorage.getItem('ip_session') || '{}');
-    return session.access_token || '';
-  } catch {
-    return '';
-  }
+// CR4-001: Token accessor — set by AuthContext to read from memory instead of sessionStorage
+let _tokenAccessor = () => '';
+
+export function setTokenAccessor(accessor) {
+  _tokenAccessor = accessor || (() => '');
 }
 
 const headers = () => {
-  const h = { 'Content-Type': 'application/json' };
-  const token = getAccessToken();
+  const h = { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' };
+  const token = _tokenAccessor();
   if (token) {
     h['Authorization'] = `Bearer ${token}`;
   }
