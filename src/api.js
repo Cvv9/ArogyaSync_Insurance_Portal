@@ -1,6 +1,7 @@
 // src/api.js — Insurance Portal API service layer (JWT auth)
 
-export const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.arogyasync.com/csv';
+// CR4-025: No hardcoded production URL fallback — env var must be set explicitly
+export const API_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 // CR4-001: Token accessor — set by AuthContext to read from memory instead of sessionStorage
 let _tokenAccessor = () => '';
