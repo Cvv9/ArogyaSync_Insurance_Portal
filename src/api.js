@@ -71,54 +71,119 @@ async function request(path, options = {}) {
 
 /** Register a new insurance agent */
 export async function registerAgent({ name, email, employee_id, insurance_company, password }) {
-  const res = await fetch(`${API_URL}/auth/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, email, employee_id, insurance_company, password }),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data?.error || 'Registration failed');
-  return data;
+  // CR6-155: Add timeout to prevent indefinite hang
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+  try {
+    const res = await fetch(`${API_URL}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, employee_id, insurance_company, password }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.error || 'Registration failed');
+    return data;
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') throw new Error('Request timed out. Please try again.');
+    throw err;
+  }
 }
 
 /** Verify agent email via token. Accepts an optional AbortSignal for cleanup. */
-export async function verifyAgentEmail(token, { signal } = {}) {
-  const res = await fetch(`${API_URL}/auth/verify?token=${encodeURIComponent(token)}`, { signal });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data?.error || 'Verification failed');
-  return data;
+export async function verifyAgentEmail(token, { signal: externalSignal } = {}) {
+  // CR6-155: Add timeout to prevent indefinite hang
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+  if (externalSignal) {
+    externalSignal.addEventListener('abort', () => controller.abort());
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/auth/verify?token=${encodeURIComponent(token)}`, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.error || 'Verification failed');
+    return data;
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      if (externalSignal?.aborted) throw err; // User-initiated cancellation
+      throw new Error('Request timed out. Please try again.');
+    }
+    throw err;
+  }
 }
 
 /** Login and get JWT tokens */
 export async function loginAgent(email, password) {
-  const res = await fetch(`${API_URL}/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data?.error || 'Login failed');
-  return data;
+  // CR6-155: Add timeout to prevent indefinite hang
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+  try {
+    const res = await fetch(`${API_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.error || 'Login failed');
+    return data;
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') throw new Error('Request timed out. Please try again.');
+    throw err;
+  }
 }
 
 /** Refresh access token */
 export async function refreshToken(refresh_token) {
-  const res = await fetch(`${API_URL}/auth/refresh`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ refresh_token }),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data?.error || 'Token refresh failed');
-  return data;
+  // CR6-155: Add timeout to prevent indefinite hang
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+  try {
+    const res = await fetch(`${API_URL}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.error || 'Token refresh failed');
+    return data;
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') throw new Error('Request timed out. Please try again.');
+    throw err;
+  }
 }
 
 /** Get list of insurance companies */
 export async function getInsuranceCompanies() {
-  const res = await fetch(`${API_URL}/auth/insurance-companies`);
-  const data = await res.json();
-  if (!res.ok) throw new Error(data?.error || 'Failed to load companies');
-  return data;
+  // CR6-155: Add timeout to prevent indefinite hang
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+  try {
+    const res = await fetch(`${API_URL}/auth/insurance-companies`, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.error || 'Failed to load companies');
+    return data;
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') throw new Error('Request timed out. Please try again.');
+    throw err;
+  }
 }
 
 // ── Protected Endpoints (use Bearer token via request()) ──
