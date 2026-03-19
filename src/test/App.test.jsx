@@ -7,8 +7,8 @@ vi.mock('../components/PatientLookup', () => ({
 vi.mock('../components/FraudResults', () => ({
   default: () => <div data-testid="fraud-results">FraudResults</div>,
 }));
-vi.mock('../components/Dashboard', () => ({
-  default: () => <div data-testid="dashboard">Dashboard</div>,
+vi.mock('../components/ScanResults', () => ({
+  default: () => <div data-testid="scan-results">ScanResults</div>,
 }));
 
 // CR4-001: Mock AuthContext to provide in-memory auth state (no sessionStorage)
@@ -52,10 +52,17 @@ describe('App routing', () => {
     expect(screen.getByTestId('fraud-results')).toBeInTheDocument();
   });
 
-  it('renders Dashboard at /dashboard', () => {
+  it('renders ScanResults at /scan-results', () => {
+    window.location.hash = '#/scan-results';
+    render(<App />);
+    expect(screen.getByTestId('scan-results')).toBeInTheDocument();
+  });
+
+  it('redirects /dashboard to / (patient lookup)', () => {
     window.location.hash = '#/dashboard';
     render(<App />);
-    expect(screen.getByTestId('dashboard')).toBeInTheDocument();
+    // /dashboard redirects to /, which renders PatientLookup
+    expect(screen.getByTestId('patient-lookup')).toBeInTheDocument();
   });
 
   it('redirects to login when not authenticated', () => {

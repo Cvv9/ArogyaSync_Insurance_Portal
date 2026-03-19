@@ -10,10 +10,18 @@ vi.mock('react-router-dom', async () => {
 });
 
 vi.mock('../api', () => ({
-  getPatientTest: vi.fn(),
+  comprehensivePatientScan: vi.fn(),
 }));
 
-import { getPatientTest } from '../api';
+vi.mock('../contexts/AuthContext', () => ({
+  useAuth: () => ({
+    agent: { name: 'Test Agent', email: 'test@example.com', insurance_company: 'Test Insurance' },
+    isAuthenticated: true,
+    getAccessToken: () => 'test-jwt-token',
+  }),
+}));
+
+import { comprehensivePatientScan } from '../api';
 
 function renderComponent() {
   return render(
@@ -36,7 +44,7 @@ describe('PatientLookup', () => {
     expect(screen.getByPlaceholderText('John Doe')).toBeInTheDocument();
     expect(getDateInput()).toBeTruthy();
     expect(screen.getByPlaceholderText('INS123456')).toBeInTheDocument();
-    expect(screen.getByText('Search Records')).toBeInTheDocument();
+    expect(screen.getByText('Run Verification Scan')).toBeInTheDocument();
   });
 
   it('renders feature badges', () => {
@@ -54,7 +62,7 @@ describe('PatientLookup', () => {
   });
 
   it('shows loading state during submission', async () => {
-    getPatientTest.mockImplementation(() => new Promise(() => {}));
+    comprehensivePatientScan.mockImplementation(() => new Promise(() => {}));
     renderComponent();
 
     fireEvent.change(screen.getByPlaceholderText('John Doe'), {
@@ -64,14 +72,14 @@ describe('PatientLookup', () => {
       target: { name: 'insuranceId', value: 'INS123' },
     });
     fireEvent.change(getDateInput(), { target: { value: '2000-01-15' } });
-    fireEvent.submit(screen.getByText('Search Records').closest('form'));
+    fireEvent.submit(screen.getByText('Run Verification Scan').closest('form'));
 
-    expect(await screen.findByText('Searching...')).toBeInTheDocument();
+    expect(await screen.findByText('Running comprehensive scan...')).toBeInTheDocument();
   });
 
-  it('navigates to /results on success', async () => {
-    const mockRecords = [{ id: 1, deviceId: 'D001', status: 'match' }];
-    getPatientTest.mockResolvedValue({ patientId: '42', records: mockRecords });
+  it('navigates to /scan-results on success', async () => {
+    const mockScanResults = { metrics: { totalVitals: 10 }, comparisons: [] };
+    comprehensivePatientScan.mockResolvedValue(mockScanResults);
     renderComponent();
 
     fireEvent.change(screen.getByPlaceholderText('John Doe'), {
@@ -81,22 +89,26 @@ describe('PatientLookup', () => {
     fireEvent.change(screen.getByPlaceholderText('INS123456'), {
       target: { name: 'insuranceId', value: 'INS999' },
     });
-    fireEvent.submit(screen.getByText('Search Records').closest('form'));
+    fireEvent.submit(screen.getByText('Run Verification Scan').closest('form'));
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/results', {
+      expect(mockNavigate).toHaveBeenCalledWith('/scan-results', {
         state: {
-          records: mockRecords,
-          patientId: '42',
-          patientName: 'Test Patient',
-          patientDob: '1990-05-10',
+          scanResults: mockScanResults,
+          searchParams: {
+            name: 'Test Patient',
+            dob: '1990-05-10',
+            insuranceId: 'INS999',
+            dateFrom: '',
+            dateTo: '',
+          },
         },
       });
     });
   });
 
   it('shows error on API failure', async () => {
-    getPatientTest.mockRejectedValue(new Error('Patient not found'));
+    comprehensivePatientScan.mockRejectedValue(new Error('Patient not found'));
     renderComponent();
 
     fireEvent.change(screen.getByPlaceholderText('John Doe'), {
@@ -106,7 +118,7 @@ describe('PatientLookup', () => {
     fireEvent.change(screen.getByPlaceholderText('INS123456'), {
       target: { name: 'insuranceId', value: 'INVALID' },
     });
-    fireEvent.submit(screen.getByText('Search Records').closest('form'));
+    fireEvent.submit(screen.getByText('Run Verification Scan').closest('form'));
 
     expect(await screen.findByText('Patient not found')).toBeInTheDocument();
   });
