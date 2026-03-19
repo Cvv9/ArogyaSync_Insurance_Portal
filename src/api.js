@@ -19,6 +19,7 @@ const headers = () => {
   return h;
 };
 
+// CR5-040: Centralized request wrapper with timeout handling (export function request)
 async function request(path, options = {}) {
   const { signal: externalSignal, timeout = 15000, ...rest } = options;
 
@@ -32,30 +33,28 @@ async function request(path, options = {}) {
   }
 
   try {
-    const res = await fetch(`${API_URL}${path}`, {
+    const response = await fetch(`${API_URL}${path}`, {
       headers: headers(),
       signal: controller.signal,
       ...rest,
     });
-    clearTimeout(timeoutId);
 
     // Check if response is JSON
-    const contentType = res.headers.get('content-type');
+    const contentType = response.headers.get('content-type');
     if (!contentType || !contentType.includes('application/json')) {
       // Rate-limited responses may arrive as HTML before the JSON handler kicks in
-      if (res.status === 429) {
+      if (response.status === 429) {
         throw new Error('Too many requests. Please wait a moment before trying again.');
       }
-      throw new Error(`API returned ${res.status}: Expected JSON but got ${contentType || 'unknown content type'}. Is the API server running at ${API_URL}?`);
+      throw new Error(`API returned ${response.status}: Expected JSON but got ${contentType || 'unknown content type'}. Is the API server running at ${API_URL}?`);
     }
 
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data?.error || `Request failed (${res.status})`);
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data?.error || `Request failed (${response.status})`);
     }
     return data;
   } catch (err) {
-    clearTimeout(timeoutId);
     if (err.name === 'AbortError') {
       if (externalSignal?.aborted) throw err; // User-initiated cancellation
       throw new Error('Request timed out. Please try again.');
@@ -64,8 +63,14 @@ async function request(path, options = {}) {
       throw new Error(`Cannot connect to API server at ${API_URL}. Is it running?`);
     }
     throw err;
+  } finally {
+    // CR5-043: Always cleanup timeout, even on error
+    clearTimeout(timeoutId);
   }
 }
+
+// CR5-044: Export request as both async and sync-compatible wrapper
+export { request };
 
 // ── Auth Endpoints (no Bearer token needed) ──
 
@@ -277,5 +282,31 @@ export async function compareVital({ record_time, sensor_id }) {
   return request('/compareVital', {
     method: 'POST',
     body: JSON.stringify({ record_time, sensor_id }),
+  });
+}
+
+// CR5-044: Additional endpoint wrappers expected by test suite
+export async function getPatientByInsuranceId(insuranceId) {
+  return request(`/patient/byInsurance/${encodeURIComponent(insuranceId)}`);
+}
+
+export async function getPatientHistory(patientId, options) {
+  const page = (options && options.page) || 1;
+  const limit = (options && options.limit) || 20;
+  return request(`/patient/${patientId}/history?page=${page}&limit=${limit}`);
+}
+
+export async function startComprehensiveScan(params, options) {
+  const name = params.name;
+  const dob = params.dob;
+  const insuranceId = params.insuranceId;
+  const dateFrom = params.dateFrom;
+  const dateTo = params.dateTo;
+  const signal = options && options.signal;
+  return request('/patient/comprehensive-scan', {
+    method: 'POST',
+    body: JSON.stringify({ name, dob, insuranceId, dateFrom, dateTo }),
+    signal,
+    timeout: 120000, // 120 second timeout for comprehensive scan
   });
 }

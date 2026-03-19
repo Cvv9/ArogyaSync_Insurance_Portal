@@ -14,7 +14,8 @@ function parseJwtExp(token) {
     const json = decodeURIComponent(
       atob(base64).split('').map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
     );
-    return JSON.parse(json).exp || null;
+    const payload = JSON.parse(json);
+    return payload.exp || null;
   } catch {
     return null;
   }
@@ -54,6 +55,11 @@ export function AuthProvider({ children }) {
   const logout = useCallback(() => {
     if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
     refreshTokenRef.current = null;
+    // CR5-044: Clear any localStorage items (defensive cleanup even though tokens are memory-only)
+    try {
+      localStorage.removeItem('insurance-portal-session');
+    } catch { /* silent fail */ }
+    // Clear session state (setToken equivalent: setSession to null)
     setSession(null);
   }, []);
 
@@ -63,6 +69,7 @@ export function AuthProvider({ children }) {
       throw new Error('No refresh token');
     }
     try {
+      // Call refresh API endpoint via request wrapper
       const data = await apiRefresh(refreshTokenRef.current);
       setSession(prev => ({ ...prev, access_token: data.access_token }));
       scheduleTokenRefresh(data.access_token, refresh);
