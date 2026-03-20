@@ -5,9 +5,15 @@ export const API_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 // CR4-001: Token accessor — set by AuthContext to read from memory instead of sessionStorage
 let _tokenAccessor = () => '';
+// CR5-040: Token refresh callback — set by AuthContext to handle expired tokens
+let _onTokenRefresh = null;
 
 export function setTokenAccessor(accessor) {
   _tokenAccessor = accessor || (() => '');
+}
+
+export function setTokenRefreshHandler(handler) {
+  _onTokenRefresh = handler || null;
 }
 
 const headers = () => {
@@ -38,6 +44,42 @@ async function request(path, options = {}) {
       signal: controller.signal,
       ...rest,
     });
+
+    // CR5-040: Handle 401 by refreshing token and retrying the original request
+    if (response.status === 401 && _onTokenRefresh) {
+      const newToken = await _onTokenRefresh();
+      if (newToken) {
+        // Retry the same request with new token
+        // Reset the timeout for the retry
+        clearTimeout(timeoutId);
+        const retryTimeoutId = setTimeout(() => controller.abort(), timeout);
+        try {
+          const retryResponse = await fetch(`${API_URL}${path}`, {
+            headers: headers(), // Will use the new token
+            signal: controller.signal,
+            ...rest,
+          });
+          clearTimeout(retryTimeoutId);
+
+          const contentType = retryResponse.headers.get('content-type');
+          if (!contentType || !contentType.includes('application/json')) {
+            if (retryResponse.status === 429) {
+              throw new Error('Too many requests. Please wait a moment before trying again.');
+            }
+            throw new Error(`API returned ${retryResponse.status}: Expected JSON but got ${contentType || 'unknown content type'}. Is the API server running at ${API_URL}?`);
+          }
+
+          const retryData = await retryResponse.json();
+          if (!retryResponse.ok) {
+            throw new Error(retryData?.error || `Request failed (${retryResponse.status})`);
+          }
+          return retryData;
+        } catch (retryErr) {
+          clearTimeout(retryTimeoutId);
+          throw retryErr;
+        }
+      }
+    }
 
     // Check if response is JSON
     const contentType = response.headers.get('content-type');

@@ -72,38 +72,27 @@ export default function ScanResults() {
   const navigate = useNavigate();
   const { scanResults, searchParams } = location.state || {};
 
+  // All hooks must be called before any conditional returns (Rules of Hooks)
   const [filter, setFilter] = useState({ from: '', to: '', status: 'all' });
   const [showFilters, setShowFilters] = useState(false);
   const [expandedRows, setExpandedRows] = useState(new Set());
   const [currentPage, setCurrentPage] = useState(1);
   const [fetchedComparisons, setFetchedComparisons] = useState({});
   const [loadingComparisons, setLoadingComparisons] = useState(new Set());
-  const PAGE_SIZE = 50;
 
-  // Redirect if no scan results
-  if (!scanResults) {
-    return (
-      <div className="max-w-4xl mx-auto text-center py-12">
-        <p className="text-text-muted">No scan results available.</p>
-        <Link to="/patient-lookup" className="text-accent-cyan hover:underline mt-2 inline-block">
-          Return to Patient Lookup
-        </Link>
-      </div>
-    );
-  }
-
+  // Extract values safely with defaults to prevent destructuring errors when scanResults is null
   const {
-    patientId,
-    totalScans,
-    matches,
-    mismatches,
+    patientId = null,
+    totalScans = 0,
+    matches = 0,
+    mismatches = 0,
     csvMissing = 0,
-    matchRate,
+    matchRate = 0,
     fraudScore = 0,
     fraudLevel = 'low_risk',
     csvCoverage = 0,
     details = [],
-  } = scanResults;
+  } = scanResults || {};
 
   const fraudCfg = FRAUD_LEVEL_CONFIG[fraudLevel] ?? FRAUD_LEVEL_CONFIG.low_risk;
 
@@ -117,6 +106,20 @@ export default function ScanResults() {
     csv_missing: details.filter(r => r.status === 'csv_missing').length,
     csv_pending: details.filter(r => r.status === 'csv_pending').length,
   }), [details]);
+
+  const PAGE_SIZE = 50;
+
+  // Redirect if no scan results (after all hooks have been called)
+  if (!scanResults) {
+    return (
+      <div className="max-w-4xl mx-auto text-center py-12">
+        <p className="text-text-muted">No scan results available.</p>
+        <Link to="/patient-lookup" className="text-accent-cyan hover:underline mt-2 inline-block">
+          Return to Patient Lookup
+        </Link>
+      </div>
+    );
+  }
 
   // Update a filter field, reset page + expanded rows
   const handleFilterChange = (updates) => {

@@ -2,7 +2,7 @@
 // CR4-001: Tokens stored in memory only (not sessionStorage) to mitigate XSS token theft
 // CR4-042: Proactive token refresh before expiry
 import { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
-import { loginAgent as apiLogin, refreshToken as apiRefresh, setTokenAccessor } from '../api';
+import { loginAgent as apiLogin, refreshToken as apiRefresh, setTokenAccessor, setTokenRefreshHandler } from '../api';
 
 const AuthContext = createContext(null);
 
@@ -97,6 +97,9 @@ export function AuthProvider({ children }) {
 
   // CR4-001: Register token accessor so api.js can get tokens from memory
   setTokenAccessor(getAccessToken);
+
+  // CR5-040: Register token refresh handler for automatic 401 retry
+  setTokenRefreshHandler(refresh);
 
   // Cleanup timer on unmount
   useEffect(() => {
