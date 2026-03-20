@@ -70,7 +70,7 @@ const STATUS_OPTIONS = [
 export default function ScanResults() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { scanResults, searchParams } = location.state || {};
+  const { scanResults } = location.state || {};
 
   // All hooks must be called before any conditional returns (Rules of Hooks)
   const [filter, setFilter] = useState({ from: '', to: '', status: 'all' });
@@ -109,18 +109,6 @@ export default function ScanResults() {
 
   const PAGE_SIZE = 50;
 
-  // Redirect if no scan results (after all hooks have been called)
-  if (!scanResults) {
-    return (
-      <div className="max-w-4xl mx-auto text-center py-12">
-        <p className="text-text-muted">No scan results available.</p>
-        <Link to="/patient-lookup" className="text-accent-cyan hover:underline mt-2 inline-block">
-          Return to Patient Lookup
-        </Link>
-      </div>
-    );
-  }
-
   // Update a filter field, reset page + expanded rows
   const handleFilterChange = (updates) => {
     setFilter(prev => ({ ...prev, ...updates }));
@@ -136,6 +124,7 @@ export default function ScanResults() {
 
   // Apply all active filters
   const filteredDetails = useMemo(() => {
+    if (!scanResults) return [];
     return details.filter((record) => {
       // Status filter
       if (filter.status !== 'all' && record.status !== filter.status) return false;
@@ -147,7 +136,7 @@ export default function ScanResults() {
       }
       return true;
     });
-  }, [details, filter]);
+  }, [details, filter, scanResults]);
 
   const totalPages = Math.max(1, Math.ceil(filteredDetails.length / PAGE_SIZE));
   const paginatedDetails = useMemo(() => {
@@ -226,6 +215,18 @@ export default function ScanResults() {
     year: 'numeric', month: 'short', day: 'numeric',
     hour: '2-digit', minute: '2-digit',
   });
+
+  // Redirect if no scan results (after all hooks have been called)
+  if (!scanResults) {
+    return (
+      <div className="max-w-4xl mx-auto text-center py-12">
+        <p className="text-text-muted">No scan results available.</p>
+        <Link to="/patient-lookup" className="text-accent-cyan hover:underline mt-2 inline-block">
+          Return to Patient Lookup
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto">

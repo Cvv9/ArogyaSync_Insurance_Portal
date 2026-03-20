@@ -35,7 +35,7 @@ describe('CR6-155: CSP Headers', () => {
   it('index.html has CSP meta tag or Vite config secure', () => {
     const indexPath = resolve(__dirname, '../../../index.html');
     if (existsSync(indexPath)) {
-      const content = readFileSync(indexPath, 'utf-8');
+      const _content = readFileSync(indexPath, 'utf-8');
       // CSP can be in meta tag or server config
     }
     expect(true).toBe(true); // Documents CSP requirement

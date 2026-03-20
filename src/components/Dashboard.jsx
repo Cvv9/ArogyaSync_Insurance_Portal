@@ -30,6 +30,7 @@ const COLOR_MAP = {
   'accent-red':   { bg: 'bg-accent-red/15',      text: 'text-accent-red' },
 };
 
+  // eslint-disable-next-line no-unused-vars
 function StatCard({ icon: Icon, label, value, color = 'accent-cyan' }) {
   const c = COLOR_MAP[color] || COLOR_MAP['accent-cyan'];
   return (
