@@ -14,6 +14,8 @@ import {
   Filter,
   ShieldCheck,
   ShieldAlert,
+  Clock,
+  Monitor,
 } from 'lucide-react';
 
 const FRAUD_LEVEL_CONFIG = {
@@ -79,6 +81,8 @@ export default function ScanResults() {
   const [currentPage, setCurrentPage] = useState(1);
   const [fetchedComparisons, setFetchedComparisons] = useState({});
   const [loadingComparisons, setLoadingComparisons] = useState(new Set());
+  const [showSessions, setShowSessions] = useState(true);
+  const [activeSessionIndex, setActiveSessionIndex] = useState(null);
 
   // Extract values safely with defaults to prevent destructuring errors when scanResults is null
   const {
@@ -91,13 +95,14 @@ export default function ScanResults() {
     fraudScore = 0,
     fraudLevel = 'low_risk',
     csvCoverage = 0,
+    sessions = [],
     details = [],
   } = scanResults || {};
 
   const fraudCfg = FRAUD_LEVEL_CONFIG[fraudLevel] ?? FRAUD_LEVEL_CONFIG.low_risk;
 
   // Count active filters for the badge
-  const activeFilterCount = (filter.from ? 1 : 0) + (filter.to ? 1 : 0) + (filter.status !== 'all' ? 1 : 0);
+  const activeFilterCount = (filter.from ? 1 : 0) + (filter.to ? 1 : 0) + (filter.status !== 'all' ? 1 : 0) + (activeSessionIndex !== null ? 1 : 0);
 
   // Counts per status for the pill labels
   const statusCounts = useMemo(() => ({
@@ -106,6 +111,24 @@ export default function ScanResults() {
     csv_missing: details.filter(r => r.status === 'csv_missing').length,
     csv_pending: details.filter(r => r.status === 'csv_pending').length,
   }), [details]);
+
+  // Compute session metadata: vitals count, duration
+  const sessionData = useMemo(() => {
+    return sessions.map((s) => {
+      const vitalCount = details.filter(d => d.sessionIndex === s.index).length;
+      const start = s.startTime ? new Date(s.startTime) : null;
+      const end = s.endTime ? new Date(s.endTime) : new Date();
+      let duration = '';
+      if (start) {
+        const diffMs = (end - start);
+        const days = Math.floor(diffMs / 86400000);
+        const hours = Math.floor((diffMs % 86400000) / 3600000);
+        if (days > 0) duration = `${days}d ${hours}h`;
+        else duration = `${hours}h`;
+      }
+      return { ...s, vitalCount, duration, isActive: !s.endTime };
+    });
+  }, [sessions, details]);
 
   const PAGE_SIZE = 50;
 
@@ -118,6 +141,7 @@ export default function ScanResults() {
 
   const clearAllFilters = () => {
     setFilter({ from: '', to: '', status: 'all' });
+    setActiveSessionIndex(null);
     setCurrentPage(1);
     setExpandedRows(new Set());
   };
@@ -126,6 +150,8 @@ export default function ScanResults() {
   const filteredDetails = useMemo(() => {
     if (!scanResults) return [];
     return details.filter((record) => {
+      // Session filter
+      if (activeSessionIndex !== null && record.sessionIndex !== activeSessionIndex) return false;
       // Status filter
       if (filter.status !== 'all' && record.status !== filter.status) return false;
       // Date/time range filter — compare UTC timestamps directly (browser localises datetime-local input)
@@ -136,7 +162,7 @@ export default function ScanResults() {
       }
       return true;
     });
-  }, [details, filter, scanResults]);
+  }, [details, filter, activeSessionIndex, scanResults]);
 
   const totalPages = Math.max(1, Math.ceil(filteredDetails.length / PAGE_SIZE));
   const paginatedDetails = useMemo(() => {
@@ -304,6 +330,105 @@ export default function ScanResults() {
           <p className="text-xs text-text-muted mt-1">of verified records</p>
         </div>
       </div>
+
+      {/* Patient Visit Sessions */}
+      {sessions.length > 0 && (
+        <div className="bg-surface-card border border-border-glass rounded-xl overflow-hidden mb-6">
+          <button
+            onClick={() => setShowSessions(!showSessions)}
+            className="flex items-center justify-between w-full px-4 py-3 text-left border-b border-border-glass"
+          >
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4 text-accent-cyan" />
+              <span className="text-sm font-semibold text-text-white">Patient Visit Sessions</span>
+              <span className="px-1.5 py-0.5 bg-accent-cyan/20 border border-accent-cyan/30 rounded text-xs text-accent-cyan font-medium">
+                {sessions.length}
+              </span>
+              {activeSessionIndex !== null && (
+                <span className="px-1.5 py-0.5 bg-purple-500/20 border border-purple-500/30 rounded text-xs text-purple-400 font-medium">
+                  Filtered to Session #{activeSessionIndex + 1}
+                </span>
+              )}
+            </div>
+            {showSessions ? <ChevronUp className="w-4 h-4 text-text-muted" /> : <ChevronDown className="w-4 h-4 text-text-muted" />}
+          </button>
+
+          {showSessions && (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-surface-darker">
+                  <tr className="text-left text-xs font-medium text-text-muted uppercase tracking-wider">
+                    <th className="px-4 py-2.5">#</th>
+                    <th className="px-4 py-2.5">Device</th>
+                    <th className="px-4 py-2.5">Check-In</th>
+                    <th className="px-4 py-2.5">Check-Out</th>
+                    <th className="px-4 py-2.5">Duration</th>
+                    <th className="px-4 py-2.5">Vitals</th>
+                    <th className="px-4 py-2.5">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border-glass">
+                  {sessionData.map((s) => {
+                    const isSelected = activeSessionIndex === s.index;
+                    return (
+                      <tr
+                        key={s.index}
+                        onClick={() => {
+                          setActiveSessionIndex(isSelected ? null : s.index);
+                          setCurrentPage(1);
+                          setExpandedRows(new Set());
+                        }}
+                        className={`cursor-pointer transition-colors ${
+                          isSelected
+                            ? 'bg-accent-cyan/10 border-l-2 border-l-accent-cyan'
+                            : 'hover:bg-surface-darker/50'
+                        }`}
+                      >
+                        <td className="px-4 py-2.5 text-sm text-text-light">{s.index + 1}</td>
+                        <td className="px-4 py-2.5">
+                          <div className="flex items-center gap-1.5">
+                            <Monitor className="w-3.5 h-3.5 text-text-muted" />
+                            <span className="text-sm text-text-white font-mono">{s.stringDeviceId}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-2.5 text-sm text-text-white">
+                          {s.startTime ? formatTimestamp(s.startTime) : '—'}
+                        </td>
+                        <td className="px-4 py-2.5 text-sm text-text-white">
+                          {s.endTime ? formatTimestamp(s.endTime) : '—'}
+                        </td>
+                        <td className="px-4 py-2.5 text-sm text-text-light">{s.duration || '—'}</td>
+                        <td className="px-4 py-2.5 text-sm text-text-white font-medium">{s.vitalCount.toLocaleString()}</td>
+                        <td className="px-4 py-2.5">
+                          {s.isActive ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-500/10 border border-green-500/20 rounded text-xs text-green-400">
+                              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" /> Active
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-surface-darker border border-border-glass rounded text-xs text-text-muted">
+                              Completed
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              {activeSessionIndex !== null && (
+                <div className="px-4 py-2 border-t border-border-glass bg-surface-darker/30">
+                  <button
+                    onClick={() => { setActiveSessionIndex(null); setCurrentPage(1); setExpandedRows(new Set()); }}
+                    className="text-xs text-accent-cyan hover:underline"
+                  >
+                    Clear session filter — show all records
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Verification Accounting Breakdown */}
       {csvMissing > 0 && (
