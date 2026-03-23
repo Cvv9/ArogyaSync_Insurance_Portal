@@ -29,7 +29,6 @@ jobs:
       - name: Build with environment variables
         env:
           VITE_API_BASE_URL: https://api.arogyasync.com/csv
-          VITE_API_KEY: ${{ secrets.VITE_API_KEY }}
         run: npm run build
 
       - name: Deploy to Hostinger via FTP

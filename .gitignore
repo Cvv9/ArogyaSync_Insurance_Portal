@@ -28,7 +28,8 @@ venv/
 .venv/
 env/
 
-# Environment — .env.local holds sensitive overrides (Vite convention)
+# Environment — never commit real secrets to .env; use .env.local instead
+.env
 .env.local
 .env.*.local
 
