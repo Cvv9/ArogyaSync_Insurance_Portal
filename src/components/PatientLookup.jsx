@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Search, ShieldCheck, IdCard, CalendarDays, Loader2, Building2 } from 'lucide-react';
 import { comprehensivePatientScan } from '../api';
 import { useAuth } from '../contexts/AuthContext';
+import DateInput from './DateInput';
 
 export default function PatientLookup() {
   const navigate = useNavigate();
@@ -116,16 +117,11 @@ export default function PatientLookup() {
           {/* Date of Birth */}
           <div>
             <label htmlFor="patient-dob" className="block text-sm font-medium text-text-light mb-1.5">Date of Birth</label>
-            <input
+            <DateInput
               id="patient-dob"
-              type="date"
               name="dob"
               value={formData.dob}
               onChange={handleChange}
-              className="w-full px-3.5 py-2.5 bg-surface-darker border border-border-glass rounded-lg
-                text-text-white text-sm
-                focus:outline-none focus:ring-2 focus:ring-accent-cyan/40 focus:border-accent-cyan/60
-                transition-colors"
             />
           </div>
 
@@ -152,30 +148,20 @@ export default function PatientLookup() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label htmlFor="date-from" className="block text-sm font-medium text-text-light mb-1.5">From</label>
-                <input
+                <DateInput
                   id="date-from"
-                  type="date"
                   name="dateFrom"
                   value={formData.dateFrom}
                   onChange={handleChange}
-                  className="w-full px-3.5 py-2.5 bg-surface-darker border border-border-glass rounded-lg
-                    text-text-white text-sm
-                    focus:outline-none focus:ring-2 focus:ring-accent-cyan/40 focus:border-accent-cyan/60
-                    transition-colors"
                 />
               </div>
               <div>
                 <label htmlFor="date-to" className="block text-sm font-medium text-text-light mb-1.5">To</label>
-                <input
+                <DateInput
                   id="date-to"
-                  type="date"
                   name="dateTo"
                   value={formData.dateTo}
                   onChange={handleChange}
-                  className="w-full px-3.5 py-2.5 bg-surface-darker border border-border-glass rounded-lg
-                    text-text-white text-sm
-                    focus:outline-none focus:ring-2 focus:ring-accent-cyan/40 focus:border-accent-cyan/60
-                    transition-colors"
                 />
               </div>
             </div>

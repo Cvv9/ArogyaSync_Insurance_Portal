@@ -31,7 +31,7 @@ function renderComponent() {
   );
 }
 
-const getDateInput = () => document.querySelector('input[type="date"]');
+const getDateInput = () => screen.getByLabelText('Date of Birth');
 
 describe('PatientLookup', () => {
   beforeEach(() => {
@@ -71,7 +71,7 @@ describe('PatientLookup', () => {
     fireEvent.change(screen.getByPlaceholderText('INS123456'), {
       target: { name: 'insuranceId', value: 'INS123' },
     });
-    fireEvent.change(getDateInput(), { target: { value: '2000-01-15' } });
+    fireEvent.change(getDateInput(), { target: { value: '15012000' } });
     fireEvent.submit(screen.getByText('Run Verification Scan').closest('form'));
 
     expect(await screen.findByText('Running comprehensive scan...')).toBeInTheDocument();
@@ -85,7 +85,7 @@ describe('PatientLookup', () => {
     fireEvent.change(screen.getByPlaceholderText('John Doe'), {
       target: { name: 'name', value: 'Test Patient' },
     });
-    fireEvent.change(getDateInput(), { target: { value: '1990-05-10' } });
+    fireEvent.change(getDateInput(), { target: { value: '10051990' } });
     fireEvent.change(screen.getByPlaceholderText('INS123456'), {
       target: { name: 'insuranceId', value: 'INS999' },
     });
@@ -114,7 +114,7 @@ describe('PatientLookup', () => {
     fireEvent.change(screen.getByPlaceholderText('John Doe'), {
       target: { name: 'name', value: 'Bad' },
     });
-    fireEvent.change(getDateInput(), { target: { value: '1985-03-20' } });
+    fireEvent.change(getDateInput(), { target: { value: '20031985' } });
     fireEvent.change(screen.getByPlaceholderText('INS123456'), {
       target: { name: 'insuranceId', value: 'INVALID' },
     });
